@@ -17,6 +17,9 @@ QuiteMap/
 ├── main.py              # Main FastAPI application
 ├── database.py          # Database configuration and session management
 ├── models.py            # SQLAlchemy ORM models
+├── config.py            # Environment variable configuration
+├── .env                 # Environment variables (base config)
+├── .env.local.example   # Example local environment file
 ├── templates/           # Jinja2 HTML templates
 │   ├── base.html       # Base template with navigation
 │   ├── index.html      # Home page
@@ -69,6 +72,38 @@ uvicorn main:app --reload
 ```
 
 The `--reload` flag enables auto-reload on code changes, perfect for development.
+
+### Environment Variables
+
+This project uses `.env` and `.env.local` files for configuration. Create these files in the project root:
+
+**`.env`** - Base configuration (tracked in git):
+```bash
+# Yandex Maps API Key
+YANDEX_MAPS_API_KEY=your-api-key-here
+
+# Database configuration (optional)
+# DATABASE_URL=sqlite:///./app.db
+
+# Application settings
+# DEBUG=False
+# SECRET_KEY=change-this-secret-key-in-production
+```
+
+**`.env.local`** - Local overrides (not tracked in git):
+```bash
+# Copy from .env.local.example and set your actual values
+YANDEX_MAPS_API_KEY=your-actual-api-key-here
+```
+
+The `.env.local` file takes precedence over `.env` for local development. Create `.env.local` by copying `.env.local.example`:
+
+```bash
+cp .env.local.example .env.local
+# Then edit .env.local with your actual API keys
+```
+
+**Get Yandex Maps API Key**: https://developer.tech.yandex.com/
 
 ### Access the Website
 
@@ -268,6 +303,23 @@ alembic history
 
 **Note**: The database is automatically created on first run using `init_db()`. For production, use migrations instead.
 
+## Environment Variables
+
+Access environment variables in your code using the `settings` object:
+
+```python
+from config import settings
+
+# Access Yandex Maps API Key
+api_key = settings.YANDEX_MAPS_API_KEY
+
+# Access other settings
+debug_mode = settings.DEBUG
+secret_key = settings.SECRET_KEY
+```
+
+The `config.py` module automatically loads variables from `.env` and `.env.local` files (`.env.local` takes precedence).
+
 ## Dependencies
 
 - **FastAPI**: Modern web framework for building APIs and web apps
@@ -275,6 +327,7 @@ alembic history
 - **Jinja2**: Template engine for server-side rendering
 - **SQLAlchemy**: SQL toolkit and ORM for Python
 - **Alembic**: Database migration tool for SQLAlchemy
+- **python-dotenv**: Environment variable management from .env files
 
 ## License
 

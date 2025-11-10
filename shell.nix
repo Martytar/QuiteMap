@@ -11,6 +11,7 @@ pkgs.mkShell {
         jinja2
         sqlalchemy # ORM for database operations
         alembic # Database migrations
+        python-dotenv # Environment variable management
         httpx # For testing HTTP endpoints
         pytest # For testing
         black # Code formatter

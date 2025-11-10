@@ -16,6 +16,9 @@ from pathlib import Path
 from database import get_db, init_db
 from models import User, Post
 
+# Configuration imports
+from config import settings
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Hello World SSR",
@@ -37,6 +40,9 @@ if static_dir.exists():
 @app.on_event("startup")
 async def startup_event():
     """Initialize database tables on application startup."""
+    # Validate configuration
+    settings.validate()
+    # Initialize database
     init_db()
 
 
@@ -52,11 +58,12 @@ async def home(request: Request):
         {
             "request": request,
             "title": "Hello, World!",
-            "message": "Welcome to your SSR website!"
+            "message": "Welcome to your SSR website!",
+            "yandex_maps_api_key": settings.YANDEX_MAPS_API_KEY
         }
     )
 
-
+    
 @app.get("/about", response_class=HTMLResponse)
 async def about(request: Request):
     """
