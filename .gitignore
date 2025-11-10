@@ -4,10 +4,13 @@
 
 # Python source files
 !main.py
+!database.py
+!models.py
 !requirements.txt
 
 # Documentation
 !README.md
+!MIGRATIONS.md
 
 # Nix development environment
 !shell.nix
@@ -19,4 +22,12 @@
 # Static files directory
 !static/
 !static/**
+
+# Alembic migrations
+!alembic/
+!alembic/**
+!alembic.ini
+
+# Database file (optional - uncomment if you want to track it)
+# !app.db
 

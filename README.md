@@ -15,14 +15,24 @@ A clean, well-structured template for building Server-Side Rendered (SSR) websit
 ```
 QuiteMap/
 ├── main.py              # Main FastAPI application
+├── database.py          # Database configuration and session management
+├── models.py            # SQLAlchemy ORM models
 ├── templates/           # Jinja2 HTML templates
 │   ├── base.html       # Base template with navigation
 │   ├── index.html      # Home page
 │   ├── about.html      # About page example
 │   ├── contact.html    # Contact page example
-│   └── user.html       # Dynamic route example
+│   ├── user.html       # Dynamic route example
+│   ├── users_list.html # Users listing page
+│   └── posts_list.html # Posts listing page
 ├── static/             # Static files (CSS, JS, images)
 │   └── style.css       # Main stylesheet
+├── alembic/            # Database migrations
+│   ├── versions/       # Migration scripts
+│   ├── env.py          # Alembic environment configuration
+│   └── script.py.mako  # Migration template
+├── alembic.ini         # Alembic configuration
+├── app.db              # SQLite database (created on first run)
 ├── requirements.txt    # Python dependencies
 ├── shell.nix          # Nix development environment
 └── README.md          # This file
@@ -67,7 +77,10 @@ Open your browser and navigate to:
 - **Home**: http://localhost:8000/
 - **About**: http://localhost:8000/about
 - **Contact**: http://localhost:8000/contact
-- **User Profile (example)**: http://localhost:8000/user/alice
+- **Users List**: http://localhost:8000/api/users
+- **Posts List**: http://localhost:8000/api/posts
+- **Create Example Data**: http://localhost:8000/api/create-example-data
+- **User Profile (example)**: http://localhost:8000/user/demo_user (after creating example data)
 
 ## How to Add New Pages
 
@@ -155,11 +168,113 @@ Reference them in templates:
 - Check the FastAPI docs at http://localhost:8000/docs for API documentation
 - Use the interactive API explorer at http://localhost:8000/redoc
 
+## Database & ORM
+
+This project uses **SQLAlchemy** as the ORM and **SQLite3** as the database.
+
+### Database Models
+
+Example models are defined in `models.py`:
+- **User**: User accounts with username, email, and profile information
+- **Post**: Blog posts with title, content, and author relationship
+
+### Using the Database
+
+The database is automatically initialized when the application starts. Example ORM operations:
+
+```python
+from database import get_db
+from models import User, Post
+from sqlalchemy.orm import Session
+
+@app.get("/users")
+async def get_users(db: Session = Depends(get_db)):
+    # Query all active users
+    users = db.query(User).filter(User.is_active == True).all()
+    return users
+
+@app.post("/users")
+async def create_user(db: Session = Depends(get_db)):
+    # Create a new user
+    new_user = User(
+        username="john_doe",
+        email="john@example.com",
+        full_name="John Doe"
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+```
+
+### Database Migrations with Alembic
+
+This project includes Alembic for database migrations.
+
+#### Initial Setup
+
+After installing dependencies, initialize Alembic (already done, but for reference):
+
+```bash
+alembic init alembic
+```
+
+#### Creating Migrations
+
+When you modify models in `models.py`, create a new migration:
+
+```bash
+# Auto-generate migration from model changes
+alembic revision --autogenerate -m "Description of changes"
+
+# Or create an empty migration for manual edits
+alembic revision -m "Description of changes"
+```
+
+#### Applying Migrations
+
+Apply all pending migrations:
+
+```bash
+alembic upgrade head
+```
+
+#### Rolling Back Migrations
+
+Roll back one migration:
+
+```bash
+alembic downgrade -1
+```
+
+Roll back to a specific revision:
+
+```bash
+alembic downgrade <revision_id>
+```
+
+#### View Migration History
+
+```bash
+alembic history
+```
+
+#### Example Workflow
+
+1. Modify `models.py` (add a field, create a new model, etc.)
+2. Generate migration: `alembic revision --autogenerate -m "Add user avatar field"`
+3. Review the generated migration in `alembic/versions/`
+4. Apply migration: `alembic upgrade head`
+
+**Note**: The database is automatically created on first run using `init_db()`. For production, use migrations instead.
+
 ## Dependencies
 
 - **FastAPI**: Modern web framework for building APIs and web apps
 - **uvicorn**: ASGI server for running FastAPI applications
 - **Jinja2**: Template engine for server-side rendering
+- **SQLAlchemy**: SQL toolkit and ORM for Python
+- **Alembic**: Database migration tool for SQLAlchemy
 
 ## License
 
