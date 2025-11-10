@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-content">
+    <h1>User Profile: {{ username }}</h1>
+    
+    <div class="user-card">
+        <p>This is an example of a dynamic route using path parameters.</p>
+        <p>The username <strong>{{ username }}</strong> was extracted from the URL path.</p>
+    </div>
+
+    <section>
+        <h2>How Dynamic Routes Work</h2>
+        <p>In <code>main.py</code>, the route is defined as:</p>
+        <pre><code>@app.get("/user/{username}", response_class=HTMLResponse)
+async def user_profile(request: Request, username: str):
+    return templates.TemplateResponse(
+        "user.html",
+        {
+            "request": request,
+            "title": f"User: {username}",
+            "username": username
+        }
+    )</code></pre>
+        <p>The <code>{username}</code> in the path becomes a parameter that you can use in your template.</p>
+    </section>
+</div>
+{% endblock %}
+

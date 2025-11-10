@@ -1,0 +1,22 @@
+# whitelist gitignore
+/*
+!.gitignore
+
+# Python source files
+!main.py
+!requirements.txt
+
+# Documentation
+!README.md
+
+# Nix development environment
+!shell.nix
+
+# Templates directory
+!templates/
+!templates/**
+
+# Static files directory
+!static/
+!static/**
+

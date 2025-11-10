@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero">
+    <h1>{{ message }}</h1>
+    <p class="subtitle">This is a template SSR website built with Python, FastAPI, and uvicorn.</p>
+    
+    <div class="features">
+        <div class="feature-card">
+            <h3>🚀 Fast</h3>
+            <p>Built on uvicorn for high performance</p>
+        </div>
+        <div class="feature-card">
+            <h3>📄 SSR</h3>
+            <p>Server-side rendering with Jinja2 templates</p>
+        </div>
+        <div class="feature-card">
+            <h3>🔧 Easy</h3>
+            <p>Simple structure for adding new pages</p>
+        </div>
+    </div>
+
+    <div class="cta">
+        <h2>Getting Started</h2>
+        <p>To add a new page, follow these steps:</p>
+        <ol>
+            <li>Create a new route in <code>main.py</code></li>
+            <li>Create a corresponding template in <code>templates/</code></li>
+            <li>Add a link to your navigation in <code>templates/base.html</code></li>
+        </ol>
+    </div>
+</div>
+{% endblock %}
+
