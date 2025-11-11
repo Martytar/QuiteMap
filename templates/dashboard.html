@@ -335,6 +335,9 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             transition: transform 0.2s, box-shadow 0.2s;
             position: relative;
+            display: flex;
+            flex-direction: column;
+            min-height: 200px;
         }
 
         .place-card:hover {
@@ -388,6 +391,17 @@
             margin-bottom: 12px;
         }
 
+        .place-card-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .place-card-bottom {
+            margin-top: auto;
+            padding-top: 12px;
+        }
+
         .noise-indicator {
             display: flex;
             align-items: center;
@@ -425,7 +439,8 @@
         .amenity-icon {
             width: 20px;
             height: 20px;
-            opacity: 0.7;
+            object-fit: contain;
+            opacity: 0.8;
         }
 
         .tags-autocomplete-wrapper {
@@ -471,6 +486,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 6px;
+            margin-bottom: 0;
         }
 
         .tag {
@@ -479,6 +495,32 @@
             border-radius: 4px;
             font-size: 12px;
             color: #666;
+        }
+
+        .tag-more-indicator {
+            cursor: pointer;
+            background: #e3f2fd;
+            color: #1976d2;
+            font-weight: 500;
+        }
+
+        .tag-more-indicator:hover {
+            background: #bbdefb;
+        }
+
+        .tag-expand-btn {
+            padding: 4px 8px;
+            background: #e3f2fd;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #1976d2;
+            cursor: pointer;
+            border: none;
+            font-weight: 500;
+        }
+
+        .tag-expand-btn:hover {
+            background: #bbdefb;
         }
 
         .delete-btn {
@@ -919,6 +961,14 @@
             `;
         }
 
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         // Render place cards
         function renderPlaces() {
             const grid = document.getElementById('places-grid');
@@ -943,44 +993,80 @@
 
             const amenityIcons = [];
             if (place.amenities.includes('wifi')) {
-                amenityIcons.push('<svg class="amenity-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.07 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>');
+                amenityIcons.push('<img src="/static/wifi.png" alt="Wi-Fi" class="amenity-icon">');
             }
             if (place.amenities.includes('outlets')) {
-                amenityIcons.push('<svg class="amenity-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C6.48 10.94 6.5 10.5 6.5 10c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .5.02.94.31 2.22.02.04-.12.26.07.12.19-.34.2-.66-.38-.66H12l-1 7zm5-13.5V9h2V7.5h-2zm-4-3V6h2V4.5h-2z"/></svg>');
+                amenityIcons.push('<img src="/static/plug.png" alt="Розетки" class="amenity-icon">');
             }
 
             card.innerHTML = `
                 <button class="delete-btn" onclick="deletePlace(${place.id})">✕</button>
-                <div class="place-header">
-                    <div>
-                        <div class="place-name">${place.name}</div>
-                        <div class="place-rating">
-                            <span class="star">★</span>
-                            <span>${place.rating || 0}</span>
+                <div class="place-card-content">
+                    <div class="place-header">
+                        <div>
+                            <div class="place-name">${place.name}</div>
+                            <div class="place-rating">
+                                <span class="star">★</span>
+                                <span>${place.rating || 0}</span>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="place-address">${place.address || 'Загрузка адреса...'}</div>
-                ${place.hours && place.hours.length > 0 ? `<div class="place-hours">${place.hours.join(', ')}</div>` : ''}
-                <div class="noise-indicator">
-                    <div class="noise-bars">${noiseBars}</div>
-                    <span class="noise-text">${getNoiseLabel(place.noise_level)}</span>
-                </div>
-                <div class="place-amenities">
-                    ${amenityIcons.join('')}
-                </div>
-                ${place.tags && place.tags.length > 0 ? `
-                    <div class="place-tags">
-                        ${place.tags.slice(0, 2).map(tag => `<span class="tag">${tag}</span>`).join('')}
-                        ${place.tags.length > 2 ? `<span class="tag">+${place.tags.length - 2}</span>` : ''}
+                    <div class="place-address">${place.address || 'Загрузка адреса...'}</div>
+                    ${place.hours && place.hours.length > 0 ? `<div class="place-hours">${place.hours.join(', ')}</div>` : ''}
+                    <div class="place-card-bottom">
+                        <div class="noise-indicator">
+                            <div class="noise-bars">${noiseBars}</div>
+                            <span class="noise-text">${getNoiseLabel(place.noise_level)}</span>
+                        </div>
+                        <div class="place-amenities">
+                            ${amenityIcons.join('')}
+                        </div>
+                        ${place.tags && place.tags.length > 0 ? `
+                            <div class="place-tags" id="place-tags-${place.id}" data-tags='${JSON.stringify(place.tags)}'>
+                                ${place.tags.slice(0, 2).map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
+                                ${place.tags.length > 2 ? `
+                                    <span class="tag tag-more-indicator" id="tag-more-${place.id}" onclick="toggleTags(${place.id})">+${place.tags.length - 2}</span>
+                                    <span class="tag tag-expand-btn" id="tag-expand-${place.id}" onclick="toggleTags(${place.id})" style="display: none;">Свернуть</span>
+                                ` : ''}
+                            </div>
+                        ` : ''}
                     </div>
-                ` : ''}
+                </div>
             `;
 
             return card;
         }
 
         // Helper functions
+
+        function toggleTags(placeId) {
+            const tagsContainer = document.getElementById(`place-tags-${placeId}`);
+            
+            if (!tagsContainer) return;
+            
+            const tagsData = tagsContainer.getAttribute('data-tags');
+            if (!tagsData) return;
+            
+            const allTags = JSON.parse(tagsData);
+            const moreIndicator = document.getElementById(`tag-more-${placeId}`);
+            const expandBtn = document.getElementById(`tag-expand-${placeId}`);
+            const isExpanded = expandBtn && expandBtn.style.display !== 'none';
+            
+            if (isExpanded) {
+                // Collapse: show only first 2 tags
+                tagsContainer.innerHTML = `
+                    ${allTags.slice(0, 2).map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
+                    <span class="tag tag-more-indicator" id="tag-more-${placeId}" onclick="toggleTags(${placeId})">+${allTags.length - 2}</span>
+                    <span class="tag tag-expand-btn" id="tag-expand-${placeId}" onclick="toggleTags(${placeId})" style="display: none;">Свернуть</span>
+                `;
+            } else {
+                // Expand: show all tags
+                tagsContainer.innerHTML = `
+                    ${allTags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
+                    <span class="tag tag-expand-btn" id="tag-expand-${placeId}" onclick="toggleTags(${placeId})">Свернуть</span>
+                `;
+            }
+        }
 
         function getNoiseLabel(level) {
             const labels = {
