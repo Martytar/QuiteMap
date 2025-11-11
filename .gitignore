@@ -35,7 +35,6 @@
 # !app.db
 
 # Environment files
-!.env
-!.env.local.example
-# .env.local is intentionally ignored (local overrides)
+!.env.example
+# .env and .env.local is intentionally ignored (local overrides)
 
