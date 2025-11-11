@@ -1055,8 +1055,8 @@
             const card = document.createElement('div');
             card.className = 'place-card';
 
-            const noiseBars = Array(10).fill(0).map((_, i) => 
-                `<div class="noise-bar ${i >= place.noise_level + 1 ? 'empty' : ''}"></div>`
+            const noiseBars = Array(9).fill(0).map((_, i) => 
+                `<div class="noise-bar ${i >= place.noise_level ? 'empty' : ''}"></div>`
             ).join('');
 
             const amenityIcons = [];
