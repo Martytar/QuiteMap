@@ -369,6 +369,54 @@
             margin-bottom: 8px;
         }
 
+        .user-rating-container {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .user-rating-label {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .star-rating {
+            display: flex;
+            gap: 2px;
+            align-items: center;
+        }
+
+        .star-rating .star-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #ddd;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+
+        .star-rating .star-btn:hover {
+            color: #ffc107;
+        }
+
+        .star-rating .star-btn.active {
+            color: #ffc107;
+        }
+
+        .star-rating .star-btn.rated {
+            cursor: pointer;
+        }
+
+        .star-rating .star-btn.rated:hover {
+            color: #ffc107;
+        }
+
         .star {
             color: #ffc107;
         }
@@ -487,6 +535,8 @@
             flex-wrap: wrap;
             gap: 6px;
             margin-bottom: 0;
+            padding-right: 60px;
+            max-width: calc(100% - 60px);
         }
 
         .tag {
@@ -512,15 +562,21 @@
             padding: 4px 8px;
             background: #e3f2fd;
             border-radius: 4px;
-            font-size: 12px;
-            color: #1976d2;
             cursor: pointer;
             border: none;
-            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .tag-expand-btn:hover {
             background: #bbdefb;
+        }
+
+        .tag-expand-btn img {
+            width: 16px;
+            height: 16px;
+            object-fit: contain;
         }
 
         .delete-btn {
@@ -993,11 +1049,35 @@
 
             const amenityIcons = [];
             if (place.amenities.includes('wifi')) {
-                amenityIcons.push('<img src="/static/wifi.png" alt="Wi-Fi" class="amenity-icon">');
+                amenityIcons.push('<img src="/static/wi-fi.png" alt="Wi-Fi" class="amenity-icon">');
             }
             if (place.amenities.includes('outlets')) {
                 amenityIcons.push('<img src="/static/plug.png" alt="Розетки" class="amenity-icon">');
             }
+
+            // Create star rating HTML
+            const userRating = place.user_rating || null;
+            const hasRated = userRating !== null;
+            const starRatingHtml = hasRated 
+                ? `<div class="user-rating-container">
+                    <div class="user-rating-label">Ваша оценка (изменить)</div>
+                    <div class="star-rating" id="star-rating-${place.id}">
+                        ${Array.from({length: 5}, (_, i) => {
+                            const starValue = i + 1;
+                            const isActive = starValue <= userRating;
+                            return `<button class="star-btn rated ${isActive ? 'active' : ''}" data-rating="${starValue}" onclick="ratePlace(${place.id}, ${starValue})" onmouseover="hoverStar(${place.id}, ${starValue})" onmouseout="resetStarHover(${place.id}, ${userRating})">★</button>`;
+                        }).join('')}
+                    </div>
+                </div>`
+                : `<div class="user-rating-container">
+                    <div class="user-rating-label">Оцените место</div>
+                    <div class="star-rating" id="star-rating-${place.id}">
+                        ${Array.from({length: 5}, (_, i) => {
+                            const starValue = i + 1;
+                            return `<button class="star-btn" data-rating="${starValue}" onclick="ratePlace(${place.id}, ${starValue})" onmouseover="hoverStar(${place.id}, ${starValue})" onmouseout="resetStarHover(${place.id})">★</button>`;
+                        }).join('')}
+                    </div>
+                </div>`;
 
             card.innerHTML = `
                 <button class="delete-btn" onclick="deletePlace(${place.id})">✕</button>
@@ -1026,11 +1106,12 @@
                                 ${place.tags.slice(0, 2).map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
                                 ${place.tags.length > 2 ? `
                                     <span class="tag tag-more-indicator" id="tag-more-${place.id}" onclick="toggleTags(${place.id})">+${place.tags.length - 2}</span>
-                                    <span class="tag tag-expand-btn" id="tag-expand-${place.id}" onclick="toggleTags(${place.id})" style="display: none;">Свернуть</span>
+                                    <span class="tag tag-expand-btn" id="tag-expand-${place.id}" onclick="toggleTags(${place.id})" style="display: none;"><img src="/static/left-align.png" alt="Свернуть"></span>
                                 ` : ''}
                             </div>
                         ` : ''}
                     </div>
+                    ${starRatingHtml}
                 </div>
             `;
 
@@ -1038,6 +1119,69 @@
         }
 
         // Helper functions
+
+        function hoverStar(placeId, rating) {
+            const starContainer = document.getElementById(`star-rating-${placeId}`);
+            if (!starContainer) return;
+            
+            const stars = starContainer.querySelectorAll('.star-btn');
+            stars.forEach((star, index) => {
+                const starValue = index + 1;
+                if (starValue <= rating) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+        }
+
+        function resetStarHover(placeId, currentRating = null) {
+            const starContainer = document.getElementById(`star-rating-${placeId}`);
+            if (!starContainer) return;
+            
+            // If there's a current rating, restore it; otherwise clear all
+            if (currentRating !== null) {
+                const stars = starContainer.querySelectorAll('.star-btn');
+                stars.forEach((star, index) => {
+                    const starValue = index + 1;
+                    if (starValue <= currentRating) {
+                        star.classList.add('active');
+                    } else {
+                        star.classList.remove('active');
+                    }
+                });
+            } else {
+                const stars = starContainer.querySelectorAll('.star-btn:not(.rated)');
+                stars.forEach(star => {
+                    star.classList.remove('active');
+                });
+            }
+        }
+
+        async function ratePlace(placeId, rating) {
+            try {
+                const formData = new FormData();
+                formData.append('rating', rating);
+
+                const response = await fetch(`/api/places/${placeId}/rating`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    // Reload places to update ratings
+                    await loadPlaces();
+                } else {
+                    const errorData = await response.json();
+                    alert('Ошибка: ' + (errorData.detail || 'Не удалось сохранить оценку'));
+                }
+            } catch (error) {
+                console.error('Error rating place:', error);
+                alert('Ошибка при сохранении оценки');
+            }
+        }
 
         function toggleTags(placeId) {
             const tagsContainer = document.getElementById(`place-tags-${placeId}`);
@@ -1057,13 +1201,13 @@
                 tagsContainer.innerHTML = `
                     ${allTags.slice(0, 2).map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
                     <span class="tag tag-more-indicator" id="tag-more-${placeId}" onclick="toggleTags(${placeId})">+${allTags.length - 2}</span>
-                    <span class="tag tag-expand-btn" id="tag-expand-${placeId}" onclick="toggleTags(${placeId})" style="display: none;">Свернуть</span>
+                    <span class="tag tag-expand-btn" id="tag-expand-${placeId}" onclick="toggleTags(${placeId})" style="display: none;"><img src="/static/left-align.png" alt="Свернуть"></span>
                 `;
             } else {
                 // Expand: show all tags
                 tagsContainer.innerHTML = `
                     ${allTags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
-                    <span class="tag tag-expand-btn" id="tag-expand-${placeId}" onclick="toggleTags(${placeId})">Свернуть</span>
+                    <span class="tag tag-expand-btn" id="tag-expand-${placeId}" onclick="toggleTags(${placeId})"><img src="/static/left-align.png" alt="Свернуть"></span>
                 `;
             }
         }

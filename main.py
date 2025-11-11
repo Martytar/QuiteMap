@@ -283,6 +283,9 @@ async def reverse_geocode(latitude: float, longitude: float) -> str:
 async def get_places(request: Request, db: Session = Depends(get_db)):
     """Get all places (available to all users)"""
     try:
+        # Try to get current user (optional)
+        user = get_user_from_token(request, db)
+        
         places = db.query(Place).all()
         places_data = []
         for place in places:
@@ -300,6 +303,16 @@ async def get_places(request: Request, db: Session = Depends(get_db)):
             ).scalar()
             avg_rating = float(avg_rating_result) if avg_rating_result else 0.0
             
+            # Get user's rating if authenticated
+            user_rating = None
+            if user:
+                user_rating_obj = db.query(Rating).filter(
+                    Rating.place_id == place.id,
+                    Rating.user_id == user.id
+                ).first()
+                if user_rating_obj:
+                    user_rating = user_rating_obj.rating
+            
             # Get tags from relationship
             tag_names = [tag.name for tag in place.tags]
             
@@ -312,6 +325,7 @@ async def get_places(request: Request, db: Session = Depends(get_db)):
                 "amenities": json.loads(place.amenities) if place.amenities else [],
                 "tags": tag_names,
                 "rating": round(avg_rating, 1),
+                "user_rating": user_rating,
                 "hours": json.loads(place.hours) if place.hours else [],
                 "address": address or ""
             })
