@@ -1,4 +1,7 @@
 from fastapi import FastAPI, Depends, Request, Form, HTTPException, status
+from typing import Optional
+import json
+import httpx
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
@@ -12,7 +15,7 @@ from datetime import datetime, timedelta
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import secrets
 from config import settings
-from models import User, UserMap
+from models import User, UserMap, Place
 
 app = FastAPI(title="QuiteMap", description="Interactive Maps with Authentication")
 
@@ -24,7 +27,7 @@ ALGORITHM = settings.JWT_ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 # Auth functions
 def verify_password(plain_password, hashed_password):
@@ -43,14 +46,32 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
+async def get_current_user(
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    db: Session = Depends(get_db)
+):
+    """Get current user from Bearer token or cookie"""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    
+    token = None
+    
+    # Try to get token from Bearer header
+    if credentials:
+        token = credentials.credentials
+    # Try to get token from cookie
+    if not token:
+        token = request.cookies.get("access_token")
+    
+    if not token:
+        raise credentials_exception
+    
     try:
-        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
@@ -95,7 +116,8 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
     
     return templates.TemplateResponse("dashboard.html", {
         "request": request,
-        "user": user
+        "user": user,
+        "yandex_maps_api_key": settings.YANDEX_MAPS_API_KEY,
     })
 
 # Authentication routes
@@ -243,6 +265,144 @@ async def get_public_maps(db: Session = Depends(get_db)):
         return JSONResponse(
             status_code=500,
             content={"detail": f"Error loading public maps: {str(e)}"}
+        )
+
+async def reverse_geocode(latitude: float, longitude: float) -> str:
+    """Get address from coordinates using Yandex Geocoder API"""
+    try:
+        api_key = settings.YANDEX_MAPS_API_KEY
+        if not api_key:
+            return ""
+        
+        async with httpx.AsyncClient() as client:
+            url = f"https://geocode-maps.yandex.ru/1.x/"
+            params = {
+                "apikey": api_key,
+                "geocode": f"{longitude},{latitude}",
+                "format": "json",
+                "results": 1
+            }
+            response = await client.get(url, params=params)
+            data = response.json()
+            
+            if data.get("response", {}).get("GeoObjectCollection", {}).get("featureMember"):
+                geo_object = data["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
+                return geo_object.get("metaDataProperty", {}).get("GeocoderMetaData", {}).get("text", "")
+    except Exception as e:
+        print(f"Geocoding error: {e}")
+    return ""
+
+# Places API endpoints
+@app.get("/api/places")
+async def get_user_places(request: Request, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Get user's places"""
+    try:
+        places = db.query(Place).filter(Place.user_id == user.id).all()
+        places_data = []
+        for place in places:
+            # Get address from geocoder if not cached
+            address = place.address
+            if not address:
+                address = await reverse_geocode(place.latitude, place.longitude)
+                if address:
+                    place.address = address
+                    db.commit()
+            
+            places_data.append({
+                "id": place.id,
+                "latitude": place.latitude,
+                "longitude": place.longitude,
+                "name": place.name,
+                "type": place.type,
+                "noise_level": place.noise_level,
+                "amenities": json.loads(place.amenities) if place.amenities else [],
+                "tags": json.loads(place.tags) if place.tags else [],
+                "rating": place.rating,
+                "hours": place.hours,
+                "status": place.status,
+                "address": address or ""
+            })
+        return {"places": places_data}
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Error loading places: {str(e)}"}
+        )
+
+@app.post("/api/places")
+async def create_place(
+    request: Request,
+    latitude: float = Form(...),
+    longitude: float = Form(...),
+    name: str = Form(...),
+    type: str = Form(...),
+    noise_level: int = Form(1),
+    amenities: str = Form("[]"),
+    tags: str = Form("[]"),
+    rating: float = Form(0.0),
+    hours: str = Form(None),
+    status: str = Form("open"),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create a new place"""
+    try:
+        # Get address from geocoder
+        address = await reverse_geocode(latitude, longitude)
+        
+        place = Place(
+            user_id=user.id,
+            latitude=latitude,
+            longitude=longitude,
+            name=name,
+            type=type,
+            noise_level=noise_level,
+            amenities=amenities,
+            tags=tags,
+            rating=rating,
+            hours=hours,
+            status=status,
+            address=address
+        )
+        db.add(place)
+        db.commit()
+        db.refresh(place)
+        
+        return {
+            "id": place.id,
+            "message": "Place created successfully",
+            "address": address
+        }
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Error creating place: {str(e)}"}
+        )
+
+@app.delete("/api/places/{place_id}")
+async def delete_place(
+    place_id: int,
+    request: Request,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete a place"""
+    try:
+        place = db.query(Place).filter(Place.id == place_id, Place.user_id == user.id).first()
+        if not place:
+            return JSONResponse(
+                status_code=404,
+                content={"detail": "Place not found"}
+            )
+        db.delete(place)
+        db.commit()
+        return {"message": "Place deleted successfully"}
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Error deleting place: {str(e)}"}
         )
 
 # Initialize application

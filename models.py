@@ -4,7 +4,7 @@ Database models using SQLAlchemy ORM.
 Example models demonstrating how to define database tables.
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, Float
 from sqlalchemy.sql import func
 from database import Base
 
@@ -47,5 +47,23 @@ class UserMap(Base):
     map_name = Column(String(100), nullable=False)
     map_config = Column(Text, nullable=False)
     is_public = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+class Place(Base):
+    __tablename__ = "places"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, nullable=False, index=True)
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    name = Column(String(200), nullable=False)
+    type = Column(String(50), nullable=False)  # cafe, library, coworking
+    noise_level = Column(Integer, default=1)  # 1-4
+    amenities = Column(Text, nullable=True)  # JSON string: ["wifi", "outlets"]
+    tags = Column(Text, nullable=True)  # JSON string: ["tag1", "tag2"]
+    rating = Column(Float, default=0.0)
+    hours = Column(String(50), nullable=True)  # "08:00-22:00" or "24/7"
+    status = Column(String(20), default="open")  # open, closed
+    address = Column(String(500), nullable=True)  # cached address from geocoder
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

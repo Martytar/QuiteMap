@@ -3,122 +3,1141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuiteMap - Дашборд</title>
+    <title>QuiteMap - Поиск тихих мест</title>
+    <script src="https://api-maps.yandex.ru/2.1/?apikey={{ yandex_maps_api_key }}&lang=ru_RU" type="text/javascript"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
         }
+
         .header {
-            background: #4f46e5;
-            color: white;
+            background: white;
             padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        .container {
-            max-width: 1200px;
+
+        .header-left {
+            flex: 1;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
         }
+
+        .search-container {
+            flex: 1;
+            margin-right: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: #4a90e2;
+        }
+
         .user-info {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
+
+        .user-name {
+            font-weight: 500;
+        }
+
         .btn {
-            padding: 10px 20px;
+            padding: 8px 16px;
             border: none;
-            border-radius: 5px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
-            font-weight: 600;
+            transition: background 0.3s;
         }
-        .btn-primary {
-            background: #4f46e5;
-            color: white;
-        }
+
         .btn-secondary {
             background: #6b7280;
             color: white;
         }
-        .alert {
-            padding: 15px;
-            border-radius: 5px;
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .main-container {
+            display: flex;
+            max-width: 1400px;
+            margin: 20px auto;
+            gap: 20px;
+            padding: 0 20px;
+        }
+
+        .filters-sidebar {
+            width: 300px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+
+        .filters-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .filter-group {
+            margin-bottom: 24px;
+        }
+
+        .filter-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: #555;
+        }
+
+        .filter-select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .noise-slider-container {
+            position: relative;
+        }
+
+        .noise-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e0e0e0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .noise-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #4a90e2;
+            cursor: pointer;
+        }
+
+        .noise-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #4a90e2;
+            cursor: pointer;
+            border: none;
+        }
+
+        .noise-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #666;
+            margin-top: 8px;
+        }
+
+        .noise-value {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .amenities-list {
+            list-style: none;
+        }
+
+        .amenity-item {
+            margin-bottom: 12px;
+        }
+
+        .amenity-checkbox {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .amenity-checkbox input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .amenity-checkbox label {
+            cursor: pointer;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .reset-filters-btn {
+            width: 100%;
+            padding: 12px;
+            background: #f0f0f0;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .reset-filters-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .map-container {
+            width: 100%;
+            height: 400px;
+            background: #e8e8e8;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #yandex-map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: #4a90e2;
+            color: white;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: none;
+        }
+
+        .btn-primary:hover {
+            background: #357abd;
+        }
+
+        .btn-primary.visible {
+            display: block;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 4px;
+        }
+
+        .results-count {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .sort-select {
+            padding: 8px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .places-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .place-card {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+
+        .place-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .place-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .place-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .place-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-open {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-closed {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .place-rating {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .star {
+            color: #ffc107;
+        }
+
+        .place-type {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .place-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        .place-address {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .place-hours {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 12px;
+        }
+
+        .noise-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .noise-bars {
+            display: flex;
+            gap: 4px;
+        }
+
+        .noise-bar {
+            width: 8px;
+            height: 16px;
+            background: #4a90e2;
+            border-radius: 2px;
+        }
+
+        .noise-bar.empty {
+            background: #e0e0e0;
+        }
+
+        .noise-text {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .place-amenities {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .amenity-icon {
+            width: 20px;
+            height: 20px;
+            opacity: 0.7;
+        }
+
+        .place-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .tag {
+            padding: 4px 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .place-card:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .delete-btn:hover {
+            background: #dc2626;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 20px;
         }
-        .alert-success {
-            background: #d1fae5;
-            color: #065f46;
-            border: 1px solid #a7f3d0;
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            border-color: #4a90e2;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .btn-cancel {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-cancel:hover {
+            background: #e0e0e0;
+        }
+
+        @media (max-width: 1024px) {
+            .main-container {
+                flex-direction: column;
+            }
+
+            .filters-sidebar {
+                width: 100%;
+            }
+
+            .places-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>QuiteMap - Дашборд</h1>
-        <div>
-            <span>Привет, {{ user.username }}!</span>
-            <button onclick="logout()" class="btn btn-secondary" style="margin-left: 15px;">Выйти</button>
-        </div>
-    </div>
-    
-    <div class="container">
-        <div class="alert alert-success">
-            <h3>Успешный вход!</h3>
-            <p>Вы вошли как: <strong>{{ user.username }}</strong> ({{ user.email }})</p>
-        </div>
-        
-        <div class="user-info">
-            <h2>Добро пожаловать в систему создания карт!</h2>
-            <p>ID пользователя: {{ user.id }}</p>
-            <p>Дата регистрации: {{ user.created_at }}</p>
-        </div>
-        
-        <div class="user-info">
-            <h3>Ваши карты</h3>
-            <div id="maps-container">
-                <p>Загрузка ваших карт...</p>
+        <div class="header-left">
+            <div class="search-container">
+                <input type="text" class="search-input" id="search-input" placeholder="🔍 Поиск по названию или адресу...">
+            </div>
+            <div class="user-info">
+                <span class="user-name">{{ user.username }}</span>
+                <button onclick="logout()" class="btn btn-secondary">Выйти</button>
             </div>
         </div>
     </div>
 
+    <div class="main-container">
+        <aside class="filters-sidebar">
+            <h2 class="filters-title">Фильтры</h2>
+            
+            <div class="filter-group">
+                <label class="filter-label">Тип места</label>
+                <select class="filter-select" id="place-type-filter">
+                    <option value="all">Все типы</option>
+                    <option value="cafe">Кафе</option>
+                    <option value="library">Библиотека</option>
+                    <option value="coworking">Коворкинг</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Уровень шума</label>
+                <div class="noise-slider-container">
+                    <input type="range" min="1" max="4" value="4" class="noise-slider" id="noise-slider">
+                    <div class="noise-labels">
+                        <span>Тихо</span>
+                        <span>Шумно</span>
+                    </div>
+                    <div class="noise-value" id="noise-value">Очень шумно</div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Удобства</label>
+                <ul class="amenities-list">
+                    <li class="amenity-item">
+                        <div class="amenity-checkbox">
+                            <input type="checkbox" id="wifi-filter">
+                            <label for="wifi-filter">Wi-Fi</label>
+                        </div>
+                    </li>
+                    <li class="amenity-item">
+                        <div class="amenity-checkbox">
+                            <input type="checkbox" id="outlets-filter">
+                            <label for="outlets-filter">Розетки</label>
+                        </div>
+                    </li>
+                    <li class="amenity-item">
+                        <div class="amenity-checkbox">
+                            <input type="checkbox" id="open-now-filter">
+                            <label for="open-now-filter">Открыто сейчас</label>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <button class="reset-filters-btn" id="reset-filters">Сбросить фильтры</button>
+        </aside>
+
+        <main class="content-area">
+            <div class="map-container">
+                <div id="yandex-map"></div>
+                <div class="map-controls">
+                    <button class="btn-primary" id="save-place-btn">Установить точку</button>
+                </div>
+            </div>
+
+            <div class="results-header">
+                <div class="results-count" id="results-count">Найдено мест: 0</div>
+                <select class="sort-select" id="sort-select">
+                    <option value="name">По названию</option>
+                    <option value="rating">По рейтингу</option>
+                    <option value="noise">По уровню шума</option>
+                </select>
+            </div>
+
+            <div class="places-grid" id="places-grid">
+                <!-- Place cards will be inserted here by JavaScript -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for adding place -->
+    <div id="place-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Добавить место</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="place-form">
+                <div class="form-group">
+                    <label class="form-label">Название *</label>
+                    <input type="text" class="form-input" id="place-name" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Тип места *</label>
+                        <select class="form-select" id="place-type" required>
+                            <option value="cafe">Кафе</option>
+                            <option value="library">Библиотека</option>
+                            <option value="coworking">Коворкинг</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Рейтинг</label>
+                        <input type="number" class="form-input" id="place-rating" min="0" max="5" step="0.1" value="0">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Уровень шума *</label>
+                        <select class="form-select" id="place-noise-level" required>
+                            <option value="1">Очень тихо</option>
+                            <option value="2">Тихо</option>
+                            <option value="3">Умеренно</option>
+                            <option value="4">Очень шумно</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Статус</label>
+                        <select class="form-select" id="place-status">
+                            <option value="open">Открыто</option>
+                            <option value="closed">Закрыто</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Часы работы</label>
+                    <input type="text" class="form-input" id="place-hours" placeholder="08:00-22:00 или 24/7">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Удобства</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="form-wifi" value="wifi">
+                            <label for="form-wifi">Wi-Fi</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="form-outlets" value="outlets">
+                            <label for="form-outlets">Розетки</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Теги (через запятую)</label>
+                    <input type="text" class="form-input" id="place-tags" placeholder="Тихая музыка, Большие столы">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-cancel" onclick="closeModal()">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
-        async function loadUserMaps() {
+        let map = null;
+        let tempPlacemark = null;
+        let tempCoords = null;
+        let permanentPlacemarks = [];
+        let places = [];
+        let filteredPlaces = [];
+
+        // Initialize Yandex Map
+        function initMap() {
+            if (typeof ymaps === 'undefined') {
+                console.error('Yandex Maps API not loaded');
+                return;
+            }
+
+            ymaps.ready(function() {
+                map = new ymaps.Map("yandex-map", {
+                    center: [55.7558, 37.6173], // Moscow center
+                    zoom: 12,
+                    controls: ['zoomControl', 'fullscreenControl']
+                });
+
+                // Click on map to set temporary marker
+                map.events.add('click', function(e) {
+                    const coords = e.get('coords');
+                    setTempMarker(coords);
+                });
+
+                loadPlaces();
+            });
+        }
+
+        // Set temporary marker on map
+        function setTempMarker(coords) {
+            // Remove existing temporary marker
+            if (tempPlacemark) {
+                map.geoObjects.remove(tempPlacemark);
+            }
+
+            tempCoords = coords;
+            tempPlacemark = new ymaps.Placemark(
+                coords,
+                {
+                    balloonContent: 'Временная метка',
+                    iconCaption: 'Временная метка'
+                },
+                {
+                    preset: 'islands#redDotIcon',
+                    draggable: true
+                }
+            );
+
+            map.geoObjects.add(tempPlacemark);
+            document.getElementById('save-place-btn').classList.add('visible');
+
+            // Update position on drag
+            tempPlacemark.events.add('dragend', function() {
+                tempCoords = tempPlacemark.geometry.getCoordinates();
+            });
+        }
+
+        // Geocode address and set temporary marker
+        async function geocodeAddress(address) {
+            if (!address.trim()) return;
+
+            const apiKey = '{{ yandex_maps_api_key }}';
+            if (!apiKey) {
+                alert('Yandex Maps API key not configured');
+                return;
+            }
+
             try {
-                const response = await fetch('/api/maps');
+                const response = await fetch(
+                    `https://geocode-maps.yandex.ru/1.x/?apikey=${apiKey}&geocode=${encodeURIComponent(address)}&format=json&results=1`
+                );
+                const data = await response.json();
                 
-                if (response.ok) {
-                    const data = await response.json();
-                    const mapsContainer = document.getElementById('maps-container');
-                    
-                    if (data.user_maps && data.user_maps.length > 0) {
-                        mapsContainer.innerHTML = '<ul>' + 
-                            data.user_maps.map(map => 
-                                `<li><strong>${map.name}</strong> (ID: ${map.id})</li>`
-                            ).join('') + 
-                            '</ul>';
-                    } else {
-                        mapsContainer.innerHTML = '<p>У вас пока нет сохраненных карт.</p>';
-                    }
+                if (data.response?.GeoObjectCollection?.featureMember?.length > 0) {
+                    const coords = data.response.GeoObjectCollection.featureMember[0]
+                        .GeoObject.Point.pos.split(' ').map(Number).reverse();
+                    setTempMarker(coords);
+                    map.setCenter(coords, 15);
                 } else {
-                    document.getElementById('maps-container').innerHTML = 
-                        '<p>Ошибка загрузки карт</p>';
+                    alert('Адрес не найден');
                 }
             } catch (error) {
-                console.error('Network error:', error);
-                document.getElementById('maps-container').innerHTML = 
-                    '<p>Ошибка сети при загрузке карт</p>';
+                console.error('Geocoding error:', error);
+                alert('Ошибка при поиске адреса');
             }
         }
-        
+
+        // Load places from API
+        async function loadPlaces() {
+            try {
+                const response = await fetch('/api/places', {
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    places = data.places || [];
+                    filteredPlaces = [...places];
+                    updateMapMarkers();
+                    renderPlaces();
+                }
+            } catch (error) {
+                console.error('Error loading places:', error);
+            }
+        }
+
+        // Update permanent markers on map
+        function updateMapMarkers() {
+            if (!map) return;
+
+            // Remove existing permanent markers
+            permanentPlacemarks.forEach(pm => map.geoObjects.remove(pm));
+            permanentPlacemarks = [];
+
+            // Add permanent markers
+            filteredPlaces.forEach(place => {
+                const placemark = new ymaps.Placemark(
+                    [place.latitude, place.longitude],
+                    {
+                        balloonContent: createBalloonContent(place),
+                        iconCaption: place.name
+                    },
+                    {
+                        preset: 'islands#blueDotIcon'
+                    }
+                );
+                map.geoObjects.add(placemark);
+                permanentPlacemarks.push(placemark);
+            });
+
+            // Fit map to show all markers if there are places
+            if (filteredPlaces.length > 0) {
+                const bounds = map.geoObjects.getBounds();
+                if (bounds) {
+                    map.setBounds(bounds, {
+                        checkZoomRange: true,
+                        duration: 300
+                    });
+                }
+            }
+        }
+
+        // Create balloon content for placemark
+        function createBalloonContent(place) {
+            return `
+                <div style="padding: 10px;">
+                    <h3 style="margin: 0 0 10px 0;">${place.name}</h3>
+                    <p style="margin: 5px 0;"><strong>Тип:</strong> ${getTypeLabel(place.type)}</p>
+                    <p style="margin: 5px 0;"><strong>Адрес:</strong> ${place.address || 'Загрузка...'}</p>
+                    <p style="margin: 5px 0;"><strong>Рейтинг:</strong> ${place.rating}</p>
+                    <p style="margin: 5px 0;"><strong>Уровень шума:</strong> ${getNoiseLabel(place.noise_level)}</p>
+                </div>
+            `;
+        }
+
+        // Render place cards
+        function renderPlaces() {
+            const grid = document.getElementById('places-grid');
+            grid.innerHTML = '';
+
+            filteredPlaces.forEach(place => {
+                const card = createPlaceCard(place);
+                grid.appendChild(card);
+            });
+
+            document.getElementById('results-count').textContent = `Найдено мест: ${filteredPlaces.length}`;
+        }
+
+        // Create place card element
+        function createPlaceCard(place) {
+            const card = document.createElement('div');
+            card.className = 'place-card';
+
+            const noiseBars = Array(4).fill(0).map((_, i) => 
+                `<div class="noise-bar ${i >= place.noise_level ? 'empty' : ''}"></div>`
+            ).join('');
+
+            const amenityIcons = [];
+            if (place.amenities.includes('wifi')) {
+                amenityIcons.push('<svg class="amenity-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.07 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>');
+            }
+            if (place.amenities.includes('outlets')) {
+                amenityIcons.push('<svg class="amenity-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C6.48 10.94 6.5 10.5 6.5 10c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .5.02.94.31 2.22.02.04-.12.26.07.12.19-.34.2-.66-.38-.66H12l-1 7zm5-13.5V9h2V7.5h-2zm-4-3V6h2V4.5h-2z"/></svg>');
+            }
+
+            const typeIcon = {
+                cafe: '☕',
+                library: '📚',
+                coworking: '💼'
+            }[place.type] || '📍';
+
+            card.innerHTML = `
+                <button class="delete-btn" onclick="deletePlace(${place.id})">✕</button>
+                <div class="place-header">
+                    <div>
+                        <div class="place-name">${place.name}</div>
+                        <div class="place-rating">
+                            <span class="star">★</span>
+                            <span>${place.rating || 0}</span>
+                        </div>
+                    </div>
+                    <div class="place-status ${place.status === 'open' ? 'status-open' : 'status-closed'}">
+                        ${place.status === 'open' ? 'Открыто' : 'Закрыто'}
+                    </div>
+                </div>
+                <div class="place-type">
+                    <span>${typeIcon}</span>
+                    <span>${getTypeLabel(place.type)}</span>
+                </div>
+                <div class="place-address">${place.address || 'Загрузка адреса...'}</div>
+                ${place.hours ? `<div class="place-hours">${place.hours}</div>` : ''}
+                <div class="noise-indicator">
+                    <div class="noise-bars">${noiseBars}</div>
+                    <span class="noise-text">${getNoiseLabel(place.noise_level)}</span>
+                </div>
+                <div class="place-amenities">
+                    ${amenityIcons.join('')}
+                </div>
+                ${place.tags && place.tags.length > 0 ? `
+                    <div class="place-tags">
+                        ${place.tags.slice(0, 2).map(tag => `<span class="tag">${tag}</span>`).join('')}
+                        ${place.tags.length > 2 ? `<span class="tag">+${place.tags.length - 2}</span>` : ''}
+                    </div>
+                ` : ''}
+            `;
+
+            return card;
+        }
+
+        // Helper functions
+        function getTypeLabel(type) {
+            const labels = {
+                cafe: 'Кафе',
+                library: 'Библиотека',
+                coworking: 'Коворкинг'
+            };
+            return labels[type] || type;
+        }
+
+        function getNoiseLabel(level) {
+            const labels = {
+                1: 'Очень тихо',
+                2: 'Тихо',
+                3: 'Умеренно',
+                4: 'Очень шумно'
+            };
+            return labels[level] || '';
+        }
+
+        // Filter places
+        function filterPlaces() {
+            const typeFilter = document.getElementById('place-type-filter').value;
+            const noiseFilter = parseInt(document.getElementById('noise-slider').value);
+            const wifiFilter = document.getElementById('wifi-filter').checked;
+            const outletsFilter = document.getElementById('outlets-filter').checked;
+            const openNowFilter = document.getElementById('open-now-filter').checked;
+            const searchQuery = document.getElementById('search-input').value.toLowerCase();
+
+            filteredPlaces = places.filter(place => {
+                if (typeFilter !== 'all' && place.type !== typeFilter) return false;
+                if (place.noise_level > noiseFilter) return false;
+                if (wifiFilter && !place.amenities.includes('wifi')) return false;
+                if (outletsFilter && !place.amenities.includes('outlets')) return false;
+                if (openNowFilter && place.status !== 'open') return false;
+                if (searchQuery && !place.name.toLowerCase().includes(searchQuery) && 
+                    !(place.address && place.address.toLowerCase().includes(searchQuery))) return false;
+                return true;
+            });
+
+            // Sort places
+            const sortBy = document.getElementById('sort-select').value;
+            if (sortBy === 'rating') {
+                filteredPlaces.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+            } else if (sortBy === 'noise') {
+                filteredPlaces.sort((a, b) => a.noise_level - b.noise_level);
+            } else {
+                filteredPlaces.sort((a, b) => a.name.localeCompare(b.name));
+            }
+
+            renderPlaces();
+            updateMapMarkers();
+        }
+
+        // Update noise slider label
+        function updateNoiseLabel(value) {
+            const labels = {
+                1: 'Очень тихо',
+                2: 'Тихо',
+                3: 'Умеренно',
+                4: 'Очень шумно'
+            };
+            document.getElementById('noise-value').textContent = labels[value] || '';
+        }
+
+        // Open modal for adding place
+        function openModal() {
+            if (!tempCoords) return;
+            document.getElementById('place-modal').style.display = 'block';
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('place-modal').style.display = 'none';
+            document.getElementById('place-form').reset();
+        }
+
+        // Save place
+        async function savePlace(event) {
+            event.preventDefault();
+            if (!tempCoords) return;
+
+            const formData = new FormData();
+            formData.append('latitude', tempCoords[0]);
+            formData.append('longitude', tempCoords[1]);
+            formData.append('name', document.getElementById('place-name').value);
+            formData.append('type', document.getElementById('place-type').value);
+            formData.append('noise_level', document.getElementById('place-noise-level').value);
+            formData.append('rating', document.getElementById('place-rating').value || 0);
+            formData.append('status', document.getElementById('place-status').value);
+            formData.append('hours', document.getElementById('place-hours').value || '');
+
+            const amenities = [];
+            if (document.getElementById('form-wifi').checked) amenities.push('wifi');
+            if (document.getElementById('form-outlets').checked) amenities.push('outlets');
+            formData.append('amenities', JSON.stringify(amenities));
+
+            const tagsInput = document.getElementById('place-tags').value;
+            const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t) : [];
+            formData.append('tags', JSON.stringify(tags));
+
+            try {
+                const response = await fetch('/api/places', {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    // Remove temporary marker
+                    if (tempPlacemark) {
+                        map.geoObjects.remove(tempPlacemark);
+                        tempPlacemark = null;
+                        tempCoords = null;
+                        document.getElementById('save-place-btn').classList.remove('visible');
+                    }
+                    closeModal();
+                    loadPlaces();
+                } else {
+                    const data = await response.json();
+                    alert('Ошибка: ' + (data.detail || 'Не удалось сохранить место'));
+                }
+            } catch (error) {
+                console.error('Error saving place:', error);
+                alert('Ошибка при сохранении места');
+            }
+        }
+
+        // Delete place
+        async function deletePlace(placeId) {
+            if (!confirm('Удалить это место?')) return;
+
+            try {
+                const response = await fetch(`/api/places/${placeId}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    loadPlaces();
+                } else {
+                    alert('Ошибка при удалении места');
+                }
+            } catch (error) {
+                console.error('Error deleting place:', error);
+                alert('Ошибка при удалении места');
+            }
+        }
+
+        // Logout
         async function logout() {
             try {
                 await fetch('/logout', { method: 'POST' });
@@ -127,10 +1146,49 @@
                 window.location.href = '/';
             }
         }
-        
+
+        // Event listeners
+        document.getElementById('place-type-filter').addEventListener('change', filterPlaces);
+        document.getElementById('noise-slider').addEventListener('input', function(e) {
+            updateNoiseLabel(e.target.value);
+            filterPlaces();
+        });
+        document.getElementById('wifi-filter').addEventListener('change', filterPlaces);
+        document.getElementById('outlets-filter').addEventListener('change', filterPlaces);
+        document.getElementById('open-now-filter').addEventListener('change', filterPlaces);
+        document.getElementById('reset-filters').addEventListener('click', function() {
+            document.getElementById('place-type-filter').value = 'all';
+            document.getElementById('noise-slider').value = 4;
+            document.getElementById('wifi-filter').checked = false;
+            document.getElementById('outlets-filter').checked = false;
+            document.getElementById('open-now-filter').checked = false;
+            document.getElementById('search-input').value = '';
+            updateNoiseLabel(4);
+            filterPlaces();
+        });
+        document.getElementById('sort-select').addEventListener('change', filterPlaces);
+        document.getElementById('search-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                geocodeAddress(this.value);
+            }
+        });
+        document.getElementById('save-place-btn').addEventListener('click', openModal);
+        document.getElementById('place-form').addEventListener('submit', savePlace);
+
+        // Close modal on outside click
+        window.onclick = function(event) {
+            const modal = document.getElementById('place-modal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            loadUserMaps();
+            initMap();
+            updateNoiseLabel(4);
         });
     </script>
 </body>
 </html>
+
