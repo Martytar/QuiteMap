@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-content">
+    <h1>{{ title }}</h1>
+    <p>This page demonstrates querying all users from the database using SQLAlchemy ORM.</p>
+    
+    {% if users %}
+    <div class="users-grid">
+        {% for user in users %}
+        <div class="user-card">
+            <h3><a href="/user/{{ user.username }}">{{ user.username }}</a></h3>
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            {% if user.full_name %}
+            <p><strong>Full Name:</strong> {{ user.full_name }}</p>
+            {% endif %}
+            <p><strong>Status:</strong> {% if user.is_active %}Active{% else %}Inactive{% endif %}</p>
+            <p><small>Created: {{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else 'N/A' }}</small></p>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No users found. <a href="/api/create-example-data">Create example data</a> to see users.</p>
+    {% endif %}
+    
+    <section>
+        <h2>ORM Code Example</h2>
+        <p>This page uses the following ORM query:</p>
+        <pre><code>users = db.query(User).filter(User.is_active == True).all()</code></pre>
+        <p>This demonstrates:</p>
+        <ul>
+            <li><code>db.query(User)</code> - Start a query on the User model</li>
+            <li><code>.filter(User.is_active == True)</code> - Filter results</li>
+            <li><code>.all()</code> - Execute query and return all results</li>
+        </ul>
+    </section>
+</div>
+{% endblock %}
+

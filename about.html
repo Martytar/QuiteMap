@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-content">
+    <h1>{{ title }}</h1>
+    <p>{{ description }}</p>
+    
+    <section>
+        <h2>How to Add Pages</h2>
+        <p>Here's a step-by-step guide to adding new pages to your SSR website:</p>
+        
+        <h3>Step 1: Add a Route</h3>
+        <p>In <code>main.py</code>, add a new route handler:</p>
+        <pre><code>@app.get("/your-page", response_class=HTMLResponse)
+async def your_page(request: Request):
+    return templates.TemplateResponse(
+        "your_page.html",
+        {
+            "request": request,
+            "title": "Your Page Title",
+            "data": "Your data here"
+        }
+    )</code></pre>
+
+        <h3>Step 2: Create a Template</h3>
+        <p>Create a new file in <code>templates/your_page.html</code>:</p>
+        <pre><code>{&#37; extends &quot;base.html&quot; &#37;}
+
+{&#37; block content &#37;}
+&lt;h1&gt;&#123;&#123; title &#125;&#125;&lt;/h1&gt;
+&lt;p&gt;Your content here&lt;/p&gt;
+{&#37; endblock &#37;}</code></pre>
+
+        <h3>Step 3: Update Navigation (Optional)</h3>
+        <p>Add a link in <code>templates/base.html</code> navigation section.</p>
+    </section>
+</div>
+{% endblock %}
+
