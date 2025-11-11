@@ -26,11 +26,6 @@
 !static/
 !static/**
 
-# Alembic migrations
-!alembic/
-!alembic/**
-!alembic.ini
-
 # Database file (optional - uncomment if you want to track it)
 # !app.db
 
