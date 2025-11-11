@@ -15,16 +15,12 @@ from datetime import datetime, timedelta
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import secrets
 from config import settings
-from models import User, UserMap, Place
+from models import User, Place
 
 app = FastAPI(title="QuiteMap", description="Interactive Maps with Authentication")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
-
-SECRET_KEY = settings.SECRET_KEY
-ALGORITHM = settings.JWT_ALGORITHM
-ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer(auto_error=False)
@@ -39,11 +35,11 @@ def get_password_hash(password):
 def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
     return encoded_jwt
 
 async def get_current_user(
@@ -71,7 +67,7 @@ async def get_current_user(
         raise credentials_exception
     
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
@@ -89,7 +85,7 @@ def get_user_from_token(request: Request, db: Session):
         return None
     
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
         username: str = payload.get("sub")
         if username:
             user = db.query(User).filter(User.username == username).first()
@@ -181,7 +177,7 @@ async def login(
                 content={"detail": "Inactive user"}
             )
         
-        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
             data={"sub": user.username}, expires_delta=access_token_expires
         )
@@ -197,8 +193,8 @@ async def login(
             key="access_token",
             value=access_token,
             httponly=True,
-            max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-            expires=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            expires=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         )
         
         return response
@@ -215,57 +211,6 @@ async def logout():
     response = RedirectResponse(url="/")
     response.delete_cookie("access_token")
     return response
-
-# Protected API routes
-@app.get("/api/maps")
-async def get_user_maps(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Get user's saved maps (protected)"""
-    try:
-        maps = db.query(UserMap).filter(UserMap.user_id == user.id).all()
-        return {
-            "message": f"Hello {user.username}!",
-            "user_maps": [{"id": m.id, "name": m.map_name} for m in maps]
-        }
-    except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"detail": f"Error loading maps: {str(e)}"}
-        )
-
-@app.post("/api/maps")
-async def save_map(
-    map_name: str = Form(...),
-    map_config: str = Form(...),
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Save user's map configuration (protected)"""
-    try:
-        user_map = UserMap(
-            user_id=user.id,
-            map_name=map_name,
-            map_config=map_config
-        )
-        db.add(user_map)
-        db.commit()
-        return {"message": "Map saved successfully", "map_id": user_map.id}
-    except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"detail": f"Error saving map: {str(e)}"}
-        )
-
-@app.get("/public/maps")
-async def get_public_maps(db: Session = Depends(get_db)):
-    """Get public maps (no authentication required)"""
-    try:
-        public_maps = db.query(UserMap).filter(UserMap.is_public == True).all()
-        return {"public_maps": [{"id": m.id, "name": m.map_name} for m in public_maps]}
-    except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"detail": f"Error loading public maps: {str(e)}"}
-        )
 
 async def reverse_geocode(latitude: float, longitude: float) -> str:
     """Get address from coordinates using Yandex Geocoder API"""

@@ -1,7 +1,5 @@
 """
 Database models using SQLAlchemy ORM.
-
-Example models demonstrating how to define database tables.
 """
 
 from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, Float
@@ -37,16 +35,6 @@ class User(Base):
     full_name = Column(String(100), nullable=True)
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
-class UserMap(Base):
-    __tablename__ = "user_maps"
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, nullable=False, index=True)
-    map_name = Column(String(100), nullable=False)
-    map_config = Column(Text, nullable=False)
-    is_public = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
