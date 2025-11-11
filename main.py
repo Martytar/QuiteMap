@@ -294,10 +294,10 @@ async def reverse_geocode(latitude: float, longitude: float) -> str:
 
 # Places API endpoints
 @app.get("/api/places")
-async def get_user_places(request: Request, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Get user's places"""
+async def get_places(request: Request, db: Session = Depends(get_db)):
+    """Get all places (available to all users)"""
     try:
-        places = db.query(Place).filter(Place.user_id == user.id).all()
+        places = db.query(Place).all()
         places_data = []
         for place in places:
             # Get address from geocoder if not cached

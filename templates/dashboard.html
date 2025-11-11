@@ -40,10 +40,12 @@
         .search-container {
             flex: 1;
             margin-right: 20px;
+            display: flex;
+            gap: 10px;
         }
 
         .search-input {
-            width: 100%;
+            flex: 1;
             padding: 12px 20px;
             font-size: 16px;
             border: 2px solid #e0e0e0;
@@ -54,6 +56,22 @@
 
         .search-input:focus {
             border-color: #4a90e2;
+        }
+
+        .search-btn {
+            padding: 12px 24px;
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .search-btn:hover {
+            background: #357abd;
         }
 
         .user-info {
@@ -274,6 +292,11 @@
 
         .btn-primary.visible {
             display: block;
+        }
+
+        /* Кнопка подтверждения в модальном окне всегда видна */
+        .modal-footer .btn-primary {
+            display: inline-block;
         }
 
         .results-header {
@@ -598,6 +621,7 @@
         <div class="header-left">
             <div class="search-container">
                 <input type="text" class="search-input" id="search-input" placeholder="🔍 Поиск по названию или адресу...">
+                <button class="search-btn" id="search-btn">Искать</button>
             </div>
             <div class="user-info">
                 <span class="user-name">{{ user.username }}</span>
@@ -749,7 +773,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-cancel" onclick="closeModal()">Отмена</button>
-                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                    <button type="submit" class="btn btn-primary" id="confirm-place-btn">Подтвердить</button>
                 </div>
             </form>
         </div>
@@ -1171,6 +1195,10 @@
             if (e.key === 'Enter') {
                 geocodeAddress(this.value);
             }
+        });
+        document.getElementById('search-btn').addEventListener('click', function() {
+            const address = document.getElementById('search-input').value;
+            geocodeAddress(address);
         });
         document.getElementById('save-place-btn').addEventListener('click', openModal);
         document.getElementById('place-form').addEventListener('submit', savePlace);
