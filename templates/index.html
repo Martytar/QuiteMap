@@ -278,7 +278,7 @@
                 <div class="user-info">
                     <h3>Добро пожаловать, <span id="user-greeting"></span>!</h3>
                     <p>Вы успешно вошли в систему</p>
-                    <button type="button" onclick="goToDashboard()" class="btn btn-primary" style="margin-top: 20px;">
+                    <button type="button" onclick="goToMap()" class="btn btn-primary" style="margin-top: 20px;">
                         Перейти к картам
                     </button>
                     <button type="button" onclick="logout()" class="btn btn-secondary">
@@ -360,7 +360,7 @@
                 localStorage.setItem('user_id', data.user_id);
                 showAlert('Успешный вход! Перенаправление...', 'success');
                 
-                window.location.href = '/dashboard';
+                window.location.href = '/map';
             } else {
                 showAlert(data.detail || 'Ошибка входа');
             }
@@ -424,8 +424,8 @@
         }
     });
 
-    function goToDashboard() {
-        window.location.href = '/dashboard';
+    function goToMap() {
+        window.location.href = '/map';
     }
 
     function logout() {

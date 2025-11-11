@@ -100,17 +100,16 @@ async def read_root(request: Request, db: Session = Depends(get_db)):
     """Main page with login form"""
     user = get_user_from_token(request, db)
     if user:
-        return RedirectResponse(url="/dashboard")
+        return RedirectResponse(url="/map")
     return templates.TemplateResponse("index.html", {"request": request})
 
-@app.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request, db: Session = Depends(get_db)):
-    """Protected dashboard with maps"""
+@app.get("/map", response_class=HTMLResponse)
+async def map(request: Request, db: Session = Depends(get_db)):
     user = get_user_from_token(request, db)
     if not user:
         return RedirectResponse(url="/")
     
-    return templates.TemplateResponse("dashboard.html", {
+    return templates.TemplateResponse("map.html", {
         "request": request,
         "user": user,
         "yandex_maps_api_key": settings.YANDEX_MAPS_API_KEY,
