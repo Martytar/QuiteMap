@@ -38,7 +38,7 @@ class Place(Base):
     longitude = Column(Float, nullable=False)
     name = Column(String(200), nullable=False)
     noise_level = Column(Integer, default=1)  # 0 - 9 (inclusive), 0 for quiet
-    amenities = Column(Text, nullable=True)  # JSON string: ["wifi", "outlets"]
+    amenities = Column(Text, nullable=True)  # JSON string: ["wifi", "outlets", "bright"]
     hours = Column(Text, nullable=True)  # JSON string: ["10-13", "13-18"] - array of time ranges
     address = Column(String(500), nullable=True)  # cached address from geocoder
     created_at = Column(DateTime(timezone=True), server_default=func.now())

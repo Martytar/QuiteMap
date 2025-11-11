@@ -489,6 +489,7 @@
             height: 20px;
             object-fit: contain;
             opacity: 0.8;
+            cursor: pointer;
         }
 
         .tags-autocomplete-wrapper {
@@ -775,7 +776,13 @@
                             <label for="outlets-filter">Розетки</label>
                         </div>
                     </li>
-                </ul>
+                     <li class="amenity-item">
+                        <div class="amenity-checkbox">
+                            <input type="checkbox" id="bright-filter">
+                            <label for="bright-filter">Светлое место</label>
+                        </div>
+                    </li>
+               </ul>
             </div>
 
             <button class="reset-filters-btn" id="reset-filters">Сбросить фильтры</button>
@@ -841,6 +848,10 @@
                         <div class="checkbox-item">
                             <input type="checkbox" id="form-outlets" value="outlets">
                             <label for="form-outlets">Розетки</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="form-bright" value="bright">
+                            <label for="form-bright">Светлое место</label>
                         </div>
                     </div>
                 </div>
@@ -1049,10 +1060,13 @@
 
             const amenityIcons = [];
             if (place.amenities.includes('wifi')) {
-                amenityIcons.push('<img src="/static/wi-fi.png" alt="Wi-Fi" class="amenity-icon">');
+                amenityIcons.push('<img src="/static/wi-fi.png" alt="Wi-Fi" title="Wi-Fi" class="amenity-icon">');
             }
             if (place.amenities.includes('outlets')) {
-                amenityIcons.push('<img src="/static/plug.png" alt="Розетки" class="amenity-icon">');
+                amenityIcons.push('<img src="/static/plug.png" alt="Розетки" title="Розетки" class="amenity-icon">');
+            }
+            if (place.amenities.includes('bright')) {
+                amenityIcons.push('<img src="/static/brightness.png" alt="Светлое место" title="Светлое место" class="amenity-icon">');
             }
 
             // Create star rating HTML
@@ -1221,12 +1235,14 @@
             const noiseFilter = parseInt(document.getElementById('noise-slider').value);
             const wifiFilter = document.getElementById('wifi-filter').checked;
             const outletsFilter = document.getElementById('outlets-filter').checked;
+            const brightFilter = document.getElementById('bright-filter').checked;
             const searchQuery = document.getElementById('search-input').value.toLowerCase();
 
             filteredPlaces = places.filter(place => {
                 if (place.noise_level > noiseFilter) return false;
                 if (wifiFilter && !place.amenities.includes('wifi')) return false;
                 if (outletsFilter && !place.amenities.includes('outlets')) return false;
+                if (brightFilter && !place.amenities.includes('bright')) return false;
                 if (searchQuery && !place.name.toLowerCase().includes(searchQuery) && 
                     !(place.address && place.address.toLowerCase().includes(searchQuery))) return false;
                 return true;
@@ -1288,6 +1304,7 @@
             const amenities = [];
             if (document.getElementById('form-wifi').checked) amenities.push('wifi');
             if (document.getElementById('form-outlets').checked) amenities.push('outlets');
+            if (document.getElementById('form-bright').checked) amenities.push('bright');
             formData.append('amenities', JSON.stringify(amenities));
 
             const tagsInput = document.getElementById('place-tags').value;
@@ -1491,10 +1508,12 @@
         });
         document.getElementById('wifi-filter').addEventListener('change', filterPlaces);
         document.getElementById('outlets-filter').addEventListener('change', filterPlaces);
+        document.getElementById('bright-filter').addEventListener('change', filterPlaces);
         document.getElementById('reset-filters').addEventListener('click', function() {
             document.getElementById('noise-slider').value = 9;
             document.getElementById('wifi-filter').checked = false;
             document.getElementById('outlets-filter').checked = false;
+            document.getElementById('bright-filter').checked = false;
             document.getElementById('search-input').value = '';
             updateNoiseLabel(9, 'noise-value');
             filterPlaces();
