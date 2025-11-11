@@ -11,8 +11,6 @@
 
 # Documentation
 !README.md
-!MIGRATIONS.md
-!ENV_EXAMPLE.md
 !docs/
 !docs/**
 
