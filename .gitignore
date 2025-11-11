@@ -8,11 +8,10 @@
 !models.py
 !config.py
 !requirements.txt
+!justfile
 
 # Documentation
 !README.md
-!MIGRATIONS.md
-!ENV_EXAMPLE.md
 !docs/
 !docs/**
 

@@ -54,7 +54,7 @@ nix-shell
 Then run the application:
 
 ```bash
-uvicorn main:app --reload
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ### Using pip
@@ -68,7 +68,7 @@ pip install -r requirements.txt
 Run the application:
 
 ```bash
-uvicorn main:app --reload
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 The `--reload` flag enables auto-reload on code changes, perfect for development.
@@ -109,7 +109,7 @@ cp .env.local.example .env.local
 
 Open your browser and navigate to:
 
-- **Home**: http://localhost:8000/
+- **Home**: http://localhost:8000/ (or http://your-server-ip:8000/ if accessing remotely)
 - **About**: http://localhost:8000/about
 - **Contact**: http://localhost:8000/contact
 - **Users List**: http://localhost:8000/api/users
@@ -198,7 +198,7 @@ Reference them in templates:
 
 ## Development Tips
 
-- Use `uvicorn main:app --reload` for auto-reload during development
+- Use `uvicorn main:app --host 0.0.0.0 --port 8000 --reload` for auto-reload during development
 - Templates are automatically reloaded when changed
 - Check the FastAPI docs at http://localhost:8000/docs for API documentation
 - Use the interactive API explorer at http://localhost:8000/redoc

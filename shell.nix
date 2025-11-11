@@ -27,7 +27,7 @@ pkgs.mkShell {
   # Optional: environment variables
   shellHook = ''
     echo "🐍 FastAPI development environment loaded!"
-    echo "Run your app with: uvicorn main:app --reload"
+    echo "Run your app with: uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
     echo "Database migrations: alembic upgrade head"
   '';
 }
