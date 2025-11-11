@@ -17,6 +17,10 @@ pkgs.mkShell {
         black # Code formatter
         isort # Import sorter
         mypy # Type checker
+        passlib # Passwords
+        python-jose # JWT
+        python-multipart
+        bcrypt
       ]))
   ];
 
