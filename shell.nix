@@ -10,7 +10,6 @@ pkgs.mkShell {
         uvicorn
         jinja2
         sqlalchemy # ORM for database operations
-        alembic # Database migrations
         python-dotenv # Environment variable management
         httpx # For testing HTTP endpoints
         pytest # For testing
@@ -27,7 +26,6 @@ pkgs.mkShell {
   # Optional: environment variables
   shellHook = ''
     echo "🐍 FastAPI development environment loaded!"
-    echo "Run your app with: uvicorn main:app --reload"
-    echo "Database migrations: alembic upgrade head"
+    echo "Run your app with: uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
   '';
 }
