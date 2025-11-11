@@ -14,19 +14,38 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-image: url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1;
         }
 
         .container {
             background: white;
             border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
             overflow: hidden;
             width: 100%;
             max-width: 400px;
+            position: relative;
+            z-index: 2;
         }
 
         .header {
@@ -34,6 +53,19 @@
             color: white;
             padding: 30px 20px;
             text-align: center;
+            position: relative;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 2px;
         }
 
         .header h1 {
@@ -43,6 +75,7 @@
 
         .header p {
             opacity: 0.9;
+            font-size: 14px;
         }
 
         .form-container {
@@ -66,12 +99,13 @@
             border: 2px solid #e5e7eb;
             border-radius: 8px;
             font-size: 16px;
-            transition: border-color 0.3s;
+            transition: all 0.3s;
         }
 
         .form-group input:focus {
             outline: none;
             border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
         }
 
         .btn {
@@ -82,7 +116,7 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.3s;
         }
 
         .btn-primary {
@@ -92,6 +126,8 @@
 
         .btn-primary:hover {
             background: #4338ca;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
         }
 
         .btn-secondary {
@@ -118,6 +154,7 @@
             cursor: pointer;
             font-weight: 600;
             text-decoration: underline;
+            transition: color 0.3s;
         }
 
         .form-toggle button:hover {
@@ -133,6 +170,7 @@
             border-radius: 8px;
             margin-bottom: 20px;
             text-align: center;
+            animation: slideDown 0.3s ease;
         }
 
         .alert-success {
@@ -156,23 +194,50 @@
             color: #4f46e5;
             margin-bottom: 10px;
         }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .container {
+            animation: fadeInUp 0.6s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🗺️ QuiteMap</h1>
-            <p>Создавайте интерактивные карты</p>
+            <h1>QuiteMap</h1>
+            <p>Создавайте интерактивные карты тишины</p>
         </div>
 
         <div class="form-container">
             <div id="alert-message" class="alert hidden"></div>
+
             <div id="login-form">
                 <h2 style="text-align: center; margin-bottom: 20px; color: #374151;">Вход в систему</h2>
                 <form id="loginForm">
                     <div class="form-group">
                         <label for="login-username">Имя пользователя</label>
-                        <input type="text" id="login-username" name="username" required placeholder="Введите ваш username">
+                        <input type="text" id="login-username" name="username" required placeholder="Введите ваш логин">
                     </div>
                     <div class="form-group">
                         <label for="login-password">Пароль</label>
@@ -227,6 +292,8 @@
             </div>
         </div>
     </div>
+<body>
+
 
     <script>
     const loginFormEl = document.getElementById('login-form');
