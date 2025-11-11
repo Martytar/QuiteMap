@@ -325,6 +325,9 @@ async def get_places(request: Request, db: Session = Depends(get_db)):
             # Get tags from relationship
             tag_names = [tag.name for tag in place.tags]
             
+            # Check if current user owns this place
+            is_owner = user and place.user_id == user.id
+            
             places_data.append({
                 "id": place.id,
                 "latitude": place.latitude,
@@ -336,7 +339,8 @@ async def get_places(request: Request, db: Session = Depends(get_db)):
                 "rating": round(avg_rating, 1),
                 "user_rating": user_rating,
                 "hours": json.loads(place.hours) if place.hours else [],
-                "address": address or ""
+                "address": address or "",
+                "is_owner": is_owner
             })
         return {"places": places_data}
     except Exception as e:
@@ -473,6 +477,92 @@ async def create_place(
         return JSONResponse(
             status_code=500,
             content={"detail": f"Error creating place: {str(e)}"}
+        )
+
+@app.put("/api/places/{place_id}")
+async def update_place(
+    place_id: int,
+    request: Request,
+    name: str = Form(...),
+    noise_level: int = Form(1),
+    amenities: str = Form("[]"),
+    tags: str = Form("[]"),
+    hours: str = Form("[]"),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update a place"""
+    try:
+        place = db.query(Place).filter(Place.id == place_id, Place.user_id == user.id).first()
+        if not place:
+            return JSONResponse(
+                status_code=404,
+                content={"detail": "Place not found"}
+            )
+        
+        # Validate inputs
+        is_valid, error_msg = validate_coordinates(place.latitude, place.longitude)
+        if not is_valid:
+            return JSONResponse(status_code=400, content={"detail": error_msg})
+        
+        is_valid, error_msg = validate_noise_level(noise_level)
+        if not is_valid:
+            return JSONResponse(status_code=400, content={"detail": error_msg})
+        
+        if not name or len(name.strip()) < 1:
+            return JSONResponse(status_code=400, content={"detail": "Name is required"})
+        
+        # Parse and validate hours
+        try:
+            hours_list = json.loads(hours) if hours else []
+            is_valid, error_msg = validate_hours_format(hours_list)
+            if not is_valid:
+                return JSONResponse(status_code=400, content={"detail": error_msg})
+        except json.JSONDecodeError:
+            return JSONResponse(status_code=400, content={"detail": "Invalid hours format"})
+        
+        # Parse and validate amenities
+        try:
+            amenities_list = json.loads(amenities) if amenities else []
+            valid_amenities = {'wifi', 'outlets', 'bright'}
+            if not all(a in valid_amenities for a in amenities_list):
+                return JSONResponse(status_code=400, content={"detail": "Invalid amenities"})
+        except json.JSONDecodeError:
+            return JSONResponse(status_code=400, content={"detail": "Invalid amenities format"})
+        
+        # Parse and validate tags
+        try:
+            tags_list = json.loads(tags) if tags else []
+            if not isinstance(tags_list, list):
+                return JSONResponse(status_code=400, content={"detail": "Tags must be a list"})
+        except json.JSONDecodeError:
+            return JSONResponse(status_code=400, content={"detail": "Invalid tags format"})
+        
+        # Update place
+        place.name = name.strip()
+        place.noise_level = noise_level
+        place.amenities = json.dumps(amenities_list)
+        place.hours = json.dumps(hours_list)
+        
+        # Update tags
+        place.tags.clear()
+        for tag_name in tags_list:
+            tag_name = tag_name.strip().lower()
+            if tag_name:
+                tag = db.query(Tag).filter(Tag.name == tag_name).first()
+                if not tag:
+                    tag = Tag(name=tag_name)
+                    db.add(tag)
+                    db.flush()
+                place.tags.append(tag)
+        
+        db.commit()
+        return {"message": "Place updated successfully", "id": place.id}
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Error updating place: {str(e)}"}
         )
 
 @app.delete("/api/places/{place_id}")

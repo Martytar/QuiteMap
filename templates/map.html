@@ -581,27 +581,49 @@
             object-fit: contain;
         }
 
-        .delete-btn {
+        .delete-btn,
+        .edit-btn {
             position: absolute;
             top: 10px;
-            right: 10px;
-            background: #ef4444;
-            color: white;
-            border: none;
+            background: white;
+            color: #333;
+            border: 1px solid #ddd;
             border-radius: 4px;
             padding: 4px 8px;
             font-size: 12px;
             cursor: pointer;
             opacity: 0;
             transition: opacity 0.2s;
+            z-index: 10;
         }
 
-        .place-card:hover .delete-btn {
+        .delete-btn {
+            right: 10px;
+            background: #ef4444;
+            color: white;
+            border-color: #ef4444;
+        }
+
+        .edit-btn {
+            right: 45px;
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .place-card:hover .delete-btn,
+        .place-card:hover .edit-btn {
             opacity: 1;
         }
 
         .delete-btn:hover {
             background: #dc2626;
+            border-color: #dc2626;
+        }
+
+        .edit-btn:hover {
+            background: #2563eb;
+            border-color: #2563eb;
         }
 
         /* Modal styles */
@@ -812,14 +834,15 @@
         </main>
     </div>
 
-    <!-- Modal for adding place -->
+    <!-- Modal for adding/editing place -->
     <div id="place-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">Добавить место</h2>
+                <h2 class="modal-title" id="modal-title">Добавить место</h2>
                 <button class="close-btn" onclick="closeModal()">&times;</button>
             </div>
             <form id="place-form">
+                <input type="hidden" id="place-id" value="">
                 <div class="form-group">
                     <label class="form-label">Название *</label>
                     <input type="text" class="form-input" id="place-name" required>
@@ -1094,8 +1117,17 @@
                     </div>
                 </div>`;
 
+            const actionButtons = place.is_owner ? `
+                <button class="edit-btn" onclick="editPlace(${place.id})" title="Редактировать">
+                    <img src="/static/edit.svg" alt="Редактировать" width="16" height="16" style="width:16px; height:16px;">
+                </button>
+                <button class="delete-btn" onclick="deletePlace(${place.id})" title="Удалить">
+                    <img src="/static/delete.svg" alt="Удалить" width="16" height="16" style="width:16px; height:16px;">
+                </button>
+            ` : '';
+            
             card.innerHTML = `
-                <button class="delete-btn" onclick="deletePlace(${place.id})">✕</button>
+                ${actionButtons}
                 <div class="place-card-content">
                     <div class="place-header">
                         <div>
@@ -1274,6 +1306,41 @@
         // Open modal for adding place
         function openModal() {
             if (!tempCoords) return;
+            // Reset form for create mode
+            document.getElementById('place-id').value = '';
+            document.getElementById('modal-title').textContent = 'Добавить место';
+            document.getElementById('confirm-place-btn').textContent = 'Добавить';
+            document.getElementById('place-modal').style.display = 'block';
+        }
+
+        // Open modal for editing place
+        function editPlace(placeId) {
+            const place = places.find(p => p.id === placeId);
+            if (!place) {
+                alert('Место не найдено');
+                return;
+            }
+
+            // Set form to edit mode
+            document.getElementById('place-id').value = placeId;
+            document.getElementById('modal-title').textContent = 'Редактировать место';
+            document.getElementById('confirm-place-btn').textContent = 'Сохранить';
+
+            // Populate form fields
+            document.getElementById('place-name').value = place.name;
+            document.getElementById('place-noise-level').value = place.noise_level;
+            updateNoiseLabel(place.noise_level, 'place-noise-value');
+            document.getElementById('place-hours').value = place.hours ? place.hours.join(', ') : '';
+            
+            // Set amenities checkboxes
+            document.getElementById('form-wifi').checked = place.amenities.includes('wifi');
+            document.getElementById('form-outlets').checked = place.amenities.includes('outlets');
+            document.getElementById('form-bright').checked = place.amenities.includes('bright');
+            
+            // Set tags
+            document.getElementById('place-tags').value = place.tags ? place.tags.join(', ') : '';
+
+            // Show modal
             document.getElementById('place-modal').style.display = 'block';
         }
 
@@ -1281,19 +1348,32 @@
         function closeModal() {
             document.getElementById('place-modal').style.display = 'none';
             document.getElementById('place-form').reset();
+            document.getElementById('place-id').value = '';
+            document.getElementById('modal-title').textContent = 'Добавить место';
+            document.getElementById('confirm-place-btn').textContent = 'Добавить';
             // Reset noise slider to default
             document.getElementById('place-noise-level').value = 0;
             updateNoiseLabel(0, 'place-noise-value');
         }
 
-        // Save place
+        // Save place (create or update)
         async function savePlace(event) {
             event.preventDefault();
-            if (!tempCoords) return;
+            
+            const placeId = document.getElementById('place-id').value;
+            const isEditMode = placeId !== '';
+
+            // For create mode, we need tempCoords
+            if (!isEditMode && !tempCoords) return;
 
             const formData = new FormData();
-            formData.append('latitude', tempCoords[0]);
-            formData.append('longitude', tempCoords[1]);
+            
+            // Only add coordinates for create mode
+            if (!isEditMode) {
+                formData.append('latitude', tempCoords[0]);
+                formData.append('longitude', tempCoords[1]);
+            }
+            
             formData.append('name', document.getElementById('place-name').value);
             formData.append('noise_level', parseInt(document.getElementById('place-noise-level').value));
 
@@ -1313,15 +1393,18 @@
             formData.append('tags', JSON.stringify(tags));
 
             try {
-                const response = await fetch('/api/places', {
-                    method: 'POST',
+                const url = isEditMode ? `/api/places/${placeId}` : '/api/places';
+                const method = isEditMode ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
                     credentials: 'include',
                     body: formData
                 });
 
                 if (response.ok) {
-                    // Remove temporary marker
-                    if (tempPlacemark) {
+                    // Remove temporary marker if creating
+                    if (!isEditMode && tempPlacemark) {
                         map.geoObjects.remove(tempPlacemark);
                         tempPlacemark = null;
                         tempCoords = null;
