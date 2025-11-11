@@ -236,11 +236,11 @@ def validate_rating(rating: float) -> tuple[bool, str]:
     return True, ""
 
 def validate_noise_level(noise_level: int) -> tuple[bool, str]:
-    """Validate noise level is between 1 and 4"""
+    """Validate noise level is between 0 and 9"""
     if not isinstance(noise_level, int):
         return False, "Noise level must be an integer"
-    if noise_level < 1 or noise_level > 4:
-        return False, "Noise level must be between 1 and 4"
+    if noise_level < 0 or noise_level > 9:
+        return False, "Noise level must be between 0 and 9"
     return True, ""
 
 def validate_coordinates(latitude: float, longitude: float) -> tuple[bool, str]:

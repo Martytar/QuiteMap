@@ -751,12 +751,12 @@
             <div class="filter-group">
                 <label class="filter-label">Уровень шума</label>
                 <div class="noise-slider-container">
-                    <input type="range" min="1" max="4" value="4" class="noise-slider" id="noise-slider">
+                    <input type="range" min="0" max="9" value="9" class="noise-slider" id="noise-slider">
                     <div class="noise-labels">
                         <span>Тихо</span>
                         <span>Шумно</span>
                     </div>
-                    <div class="noise-value" id="noise-value">Очень шумно</div>
+                    <div class="noise-value" id="noise-value">9</div>
                 </div>
             </div>
 
@@ -816,15 +816,15 @@
                     <label class="form-label">Название *</label>
                     <input type="text" class="form-input" id="place-name" required>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Уровень шума *</label>
-                        <select class="form-select" id="place-noise-level" required>
-                            <option value="1">Очень тихо</option>
-                            <option value="2">Тихо</option>
-                            <option value="3">Умеренно</option>
-                            <option value="4">Очень шумно</option>
-                        </select>
+                <div class="form-group">
+                    <label class="form-label">Уровень шума *</label>
+                    <div class="noise-slider-container">
+                        <input type="range" min="0" max="9" value="0" class="noise-slider" id="place-noise-level" required>
+                        <div class="noise-labels">
+                            <span>Тихо</span>
+                            <span>Шумно</span>
+                        </div>
+                        <div class="noise-value" id="place-noise-value">0</div>
                     </div>
                 </div>
                 <div class="form-group">
@@ -1043,8 +1043,8 @@
             const card = document.createElement('div');
             card.className = 'place-card';
 
-            const noiseBars = Array(4).fill(0).map((_, i) => 
-                `<div class="noise-bar ${i >= place.noise_level ? 'empty' : ''}"></div>`
+            const noiseBars = Array(10).fill(0).map((_, i) => 
+                `<div class="noise-bar ${i >= place.noise_level + 1 ? 'empty' : ''}"></div>`
             ).join('');
 
             const amenityIcons = [];
@@ -1213,13 +1213,7 @@
         }
 
         function getNoiseLabel(level) {
-            const labels = {
-                1: 'Очень тихо',
-                2: 'Тихо',
-                3: 'Умеренно',
-                4: 'Очень шумно'
-            };
-            return labels[level] || '';
+            return level.toString();
         }
 
         // Filter places
@@ -1252,15 +1246,12 @@
             updateMapMarkers();
         }
 
-        // Update noise slider label
-        function updateNoiseLabel(value) {
-            const labels = {
-                1: 'Очень тихо',
-                2: 'Тихо',
-                3: 'Умеренно',
-                4: 'Очень шумно'
-            };
-            document.getElementById('noise-value').textContent = labels[value] || '';
+        // Update noise slider label (shared function)
+        function updateNoiseLabel(value, elementId = 'noise-value') {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = value;
+            }
         }
 
         // Open modal for adding place
@@ -1273,6 +1264,9 @@
         function closeModal() {
             document.getElementById('place-modal').style.display = 'none';
             document.getElementById('place-form').reset();
+            // Reset noise slider to default
+            document.getElementById('place-noise-level').value = 0;
+            updateNoiseLabel(0, 'place-noise-value');
         }
 
         // Save place
@@ -1284,7 +1278,7 @@
             formData.append('latitude', tempCoords[0]);
             formData.append('longitude', tempCoords[1]);
             formData.append('name', document.getElementById('place-name').value);
-            formData.append('noise_level', document.getElementById('place-noise-level').value);
+            formData.append('noise_level', parseInt(document.getElementById('place-noise-level').value));
 
             // Parse hours input: "10-13, 13-18" -> ["10-13", "13-18"]
             const hoursInput = document.getElementById('place-hours').value || '';
@@ -1487,17 +1481,22 @@
 
         // Event listeners
         document.getElementById('noise-slider').addEventListener('input', function(e) {
-            updateNoiseLabel(e.target.value);
+            updateNoiseLabel(e.target.value, 'noise-value');
             filterPlaces();
+        });
+        
+        // Place creation form noise slider
+        document.getElementById('place-noise-level').addEventListener('input', function(e) {
+            updateNoiseLabel(e.target.value, 'place-noise-value');
         });
         document.getElementById('wifi-filter').addEventListener('change', filterPlaces);
         document.getElementById('outlets-filter').addEventListener('change', filterPlaces);
         document.getElementById('reset-filters').addEventListener('click', function() {
-            document.getElementById('noise-slider').value = 4;
+            document.getElementById('noise-slider').value = 9;
             document.getElementById('wifi-filter').checked = false;
             document.getElementById('outlets-filter').checked = false;
             document.getElementById('search-input').value = '';
-            updateNoiseLabel(4);
+            updateNoiseLabel(9, 'noise-value');
             filterPlaces();
         });
         document.getElementById('sort-select').addEventListener('change', filterPlaces);
@@ -1524,7 +1523,8 @@
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             initMap();
-            updateNoiseLabel(4);
+            updateNoiseLabel(9, 'noise-value');
+            updateNoiseLabel(0, 'place-noise-value');
         });
     </script>
 </body>
