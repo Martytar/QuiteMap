@@ -19,6 +19,15 @@ from models import User, Place, Rating, Tag, place_tags
 
 app = FastAPI(title="QuiteMap", description="Interactive Maps with Authentication")
 
+# Middleware to add cache headers for static files
+@app.middleware("http")
+async def add_cache_headers(request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/static"):
+        # Cache static files for 1 hour (3600 seconds)
+        response.headers["Cache-Control"] = "public, max-age=3600, immutable"
+    return response
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
