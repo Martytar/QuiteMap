@@ -15,7 +15,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import secrets
 from config import settings
-from models import User, Place
+from models import User, Place, Rating, Tag, place_tags
 
 app = FastAPI(title="QuiteMap", description="Interactive Maps with Authentication")
 
@@ -120,26 +120,24 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
 @app.post("/register")
 async def register(
     username: str = Form(...),
-    email: str = Form(...),
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
     """Register new user"""
     try:
         existing_user = db.query(User).filter(
-            (User.username == username) | (User.email == email)
+            User.username == username
         ).first()
         
         if existing_user:
             return JSONResponse(
                 status_code=400,
-                content={"detail": "Username or email already registered"}
+                content={"detail": "Username already registered"}
             )
         
         hashed_password = get_password_hash(password)
         user = User(
             username=username,
-            email=email,
             hashed_password=hashed_password,
             is_active=True
         )
@@ -212,6 +210,50 @@ async def logout():
     response.delete_cookie("access_token")
     return response
 
+# Validation functions
+def validate_hours_format(hours_list: list) -> tuple[bool, str]:
+    """Validate hours format. Each hour should be in format 'HH-HH' or 'HH:MM-HH:MM'"""
+    if not isinstance(hours_list, list):
+        return False, "Hours must be a list"
+    
+    import re
+    # Pattern: HH-HH or HH:MM-HH:MM (24-hour format)
+    pattern = r'^([0-1]?[0-9]|2[0-3])(:([0-5][0-9]))?\-([0-1]?[0-9]|2[0-3])(:([0-5][0-9]))?$'
+    
+    for hour_range in hours_list:
+        if not isinstance(hour_range, str):
+            return False, f"Each hour range must be a string, got: {type(hour_range)}"
+        if not re.match(pattern, hour_range.strip()):
+            return False, f"Invalid hour format: '{hour_range}'. Expected format: '10-13' or '10:00-13:00'"
+    
+    return True, ""
+
+def validate_rating(rating: float) -> tuple[bool, str]:
+    """Validate rating is between 0.0 and 5.0"""
+    if not isinstance(rating, (int, float)):
+        return False, "Rating must be a number"
+    if rating < 0.0 or rating > 5.0:
+        return False, "Rating must be between 0.0 and 5.0"
+    return True, ""
+
+def validate_noise_level(noise_level: int) -> tuple[bool, str]:
+    """Validate noise level is between 1 and 4"""
+    if not isinstance(noise_level, int):
+        return False, "Noise level must be an integer"
+    if noise_level < 1 or noise_level > 4:
+        return False, "Noise level must be between 1 and 4"
+    return True, ""
+
+def validate_coordinates(latitude: float, longitude: float) -> tuple[bool, str]:
+    """Validate coordinates are within valid ranges"""
+    if not isinstance(latitude, (int, float)) or not isinstance(longitude, (int, float)):
+        return False, "Coordinates must be numbers"
+    if latitude < -90 or latitude > 90:
+        return False, "Latitude must be between -90 and 90"
+    if longitude < -180 or longitude > 180:
+        return False, "Longitude must be between -180 and 180"
+    return True, ""
+
 async def reverse_geocode(latitude: float, longitude: float) -> str:
     """Get address from coordinates using Yandex Geocoder API"""
     try:
@@ -253,18 +295,25 @@ async def get_places(request: Request, db: Session = Depends(get_db)):
                     place.address = address
                     db.commit()
             
+            # Calculate average rating from ratings table
+            avg_rating_result = db.query(func.avg(Rating.rating)).filter(
+                Rating.place_id == place.id
+            ).scalar()
+            avg_rating = float(avg_rating_result) if avg_rating_result else 0.0
+            
+            # Get tags from relationship
+            tag_names = [tag.name for tag in place.tags]
+            
             places_data.append({
                 "id": place.id,
                 "latitude": place.latitude,
                 "longitude": place.longitude,
                 "name": place.name,
-                "type": place.type,
                 "noise_level": place.noise_level,
                 "amenities": json.loads(place.amenities) if place.amenities else [],
-                "tags": json.loads(place.tags) if place.tags else [],
-                "rating": place.rating,
-                "hours": place.hours,
-                "status": place.status,
+                "tags": tag_names,
+                "rating": round(avg_rating, 1),
+                "hours": json.loads(place.hours) if place.hours else [],
                 "address": address or ""
             })
         return {"places": places_data}
@@ -280,36 +329,115 @@ async def create_place(
     latitude: float = Form(...),
     longitude: float = Form(...),
     name: str = Form(...),
-    type: str = Form(...),
     noise_level: int = Form(1),
     amenities: str = Form("[]"),
     tags: str = Form("[]"),
-    rating: float = Form(0.0),
-    hours: str = Form(None),
-    status: str = Form("open"),
+    hours: str = Form("[]"),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Create a new place"""
     try:
+        # Validate coordinates
+        valid, error = validate_coordinates(latitude, longitude)
+        if not valid:
+            return JSONResponse(status_code=400, content={"detail": error})
+        
+        # Validate noise level
+        valid, error = validate_noise_level(noise_level)
+        if not valid:
+            return JSONResponse(status_code=400, content={"detail": error})
+        
+        # Validate name
+        name = name.strip()
+        if not name or len(name) > 200:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Name is required and must be 200 characters or less"}
+            )
+        
+        # Validate and parse hours
+        try:
+            hours_list = json.loads(hours) if hours else []
+            if not isinstance(hours_list, list):
+                hours_list = []
+        except (json.JSONDecodeError, TypeError):
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Hours must be a valid JSON array"}
+            )
+        
+        valid, error = validate_hours_format(hours_list)
+        if not valid:
+            return JSONResponse(status_code=400, content={"detail": error})
+        
+        # Validate and parse amenities
+        try:
+            amenities_list = json.loads(amenities) if amenities else []
+            if not isinstance(amenities_list, list):
+                amenities_list = []
+            # Validate amenities are strings
+            for amenity in amenities_list:
+                if not isinstance(amenity, str):
+                    return JSONResponse(
+                        status_code=400,
+                        content={"detail": "All amenities must be strings"}
+                    )
+        except (json.JSONDecodeError, TypeError):
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Amenities must be a valid JSON array"}
+            )
+        
+        # Validate and parse tags
+        try:
+            tags_list = json.loads(tags) if tags else []
+            if not isinstance(tags_list, list):
+                tags_list = []
+            # Validate tags are strings and trim them
+            tag_names = []
+            for tag in tags_list:
+                if not isinstance(tag, str):
+                    return JSONResponse(
+                        status_code=400,
+                        content={"detail": "All tags must be strings"}
+                    )
+                tag_trimmed = tag.strip()
+                if tag_trimmed and len(tag_trimmed) <= 100:
+                    tag_names.append(tag_trimmed)
+        except (json.JSONDecodeError, TypeError):
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Tags must be a valid JSON array"}
+            )
+        
         # Get address from geocoder
         address = await reverse_geocode(latitude, longitude)
         
+        # Create place
         place = Place(
             user_id=user.id,
             latitude=latitude,
             longitude=longitude,
             name=name,
-            type=type,
             noise_level=noise_level,
-            amenities=amenities,
-            tags=tags,
-            rating=rating,
-            hours=hours,
-            status=status,
+            amenities=json.dumps(amenities_list),
+            hours=json.dumps(hours_list),
             address=address
         )
         db.add(place)
+        db.flush()  # Flush to get place.id
+        
+        # Create or get tags and associate with place
+        for tag_name in tag_names:
+            # Get or create tag
+            tag = db.query(Tag).filter(Tag.name == tag_name).first()
+            if not tag:
+                tag = Tag(name=tag_name)
+                db.add(tag)
+                db.flush()
+            place.tags.append(tag)
+        
         db.commit()
         db.refresh(place)
         
@@ -348,6 +476,117 @@ async def delete_place(
         return JSONResponse(
             status_code=500,
             content={"detail": f"Error deleting place: {str(e)}"}
+        )
+
+@app.post("/api/places/{place_id}/rating")
+async def rate_place(
+    place_id: int,
+    rating: float = Form(...),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Rate a place (create or update rating)"""
+    try:
+        # Validate rating value
+        valid, error = validate_rating(rating)
+        if not valid:
+            return JSONResponse(status_code=400, content={"detail": error})
+        
+        # Check if place exists
+        place = db.query(Place).filter(Place.id == place_id).first()
+        if not place:
+            return JSONResponse(
+                status_code=404,
+                content={"detail": "Place not found"}
+            )
+        
+        # Check if user already rated this place
+        existing_rating = db.query(Rating).filter(
+            Rating.place_id == place_id,
+            Rating.user_id == user.id
+        ).first()
+        
+        if existing_rating:
+            # Update existing rating
+            existing_rating.rating = rating
+            existing_rating.updated_at = datetime.now(timezone.utc)
+        else:
+            # Create new rating
+            new_rating = Rating(
+                user_id=user.id,
+                place_id=place_id,
+                rating=rating
+            )
+            db.add(new_rating)
+        
+        db.commit()
+        
+        # Calculate new average rating
+        avg_rating_result = db.query(func.avg(Rating.rating)).filter(
+            Rating.place_id == place_id
+        ).scalar()
+        avg_rating = float(avg_rating_result) if avg_rating_result else 0.0
+        
+        return {
+            "message": "Rating saved successfully",
+            "average_rating": round(avg_rating, 1)
+        }
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Error saving rating: {str(e)}"}
+        )
+
+@app.get("/api/places/{place_id}/rating")
+async def get_user_rating(
+    place_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get current user's rating for a place"""
+    try:
+        rating = db.query(Rating).filter(
+            Rating.place_id == place_id,
+            Rating.user_id == user.id
+        ).first()
+        
+        if rating:
+            return {"rating": rating.rating}
+        else:
+            return {"rating": None}
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Error getting rating: {str(e)}"}
+        )
+
+@app.get("/api/tags/autocomplete")
+async def autocomplete_tags(
+    q: str = "",
+    limit: int = 10,
+    db: Session = Depends(get_db)
+):
+    """Get tag suggestions for autocomplete"""
+    try:
+        query = q.strip()
+        if not query:
+            # Return most used tags if no query
+            tags = db.query(Tag).join(place_tags).group_by(Tag.id).order_by(
+                func.count(place_tags.c.place_id).desc()
+            ).limit(limit).all()
+        else:
+            # Search tags by name (SQLite compatible - use LIKE with lower)
+            query_lower = query.lower()
+            tags = db.query(Tag).filter(
+                func.lower(Tag.name).like(f"%{query_lower}%")
+            ).order_by(Tag.name).limit(limit).all()
+        
+        return {"tags": [tag.name for tag in tags]}
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Error getting tags: {str(e)}"}
         )
 
 # Initialize application

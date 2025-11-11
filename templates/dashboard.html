@@ -356,22 +356,6 @@
             margin-bottom: 4px;
         }
 
-        .place-status {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .status-open {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
-
-        .status-closed {
-            background: #ffebee;
-            color: #c62828;
-        }
 
         .place-rating {
             display: flex;
@@ -386,14 +370,6 @@
             color: #ffc107;
         }
 
-        .place-type {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 8px;
-        }
 
         .place-icon {
             width: 16px;
@@ -450,6 +426,45 @@
             width: 20px;
             height: 20px;
             opacity: 0.7;
+        }
+
+        .tags-autocomplete-wrapper {
+            position: relative;
+        }
+
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            margin-top: 2px;
+        }
+
+        .autocomplete-dropdown.show {
+            display: block;
+        }
+
+        .autocomplete-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .autocomplete-item:hover,
+        .autocomplete-item.selected {
+            background: #f5f5f5;
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
         }
 
         .place-tags {
@@ -634,15 +649,6 @@
         <aside class="filters-sidebar">
             <h2 class="filters-title">Фильтры</h2>
             
-            <div class="filter-group">
-                <label class="filter-label">Тип места</label>
-                <select class="filter-select" id="place-type-filter">
-                    <option value="all">Все типы</option>
-                    <option value="cafe">Кафе</option>
-                    <option value="library">Библиотека</option>
-                    <option value="coworking">Коворкинг</option>
-                </select>
-            </div>
 
             <div class="filter-group">
                 <label class="filter-label">Уровень шума</label>
@@ -669,12 +675,6 @@
                         <div class="amenity-checkbox">
                             <input type="checkbox" id="outlets-filter">
                             <label for="outlets-filter">Розетки</label>
-                        </div>
-                    </li>
-                    <li class="amenity-item">
-                        <div class="amenity-checkbox">
-                            <input type="checkbox" id="open-now-filter">
-                            <label for="open-now-filter">Открыто сейчас</label>
                         </div>
                     </li>
                 </ul>
@@ -720,20 +720,6 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">Тип места *</label>
-                        <select class="form-select" id="place-type" required>
-                            <option value="cafe">Кафе</option>
-                            <option value="library">Библиотека</option>
-                            <option value="coworking">Коворкинг</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Рейтинг</label>
-                        <input type="number" class="form-input" id="place-rating" min="0" max="5" step="0.1" value="0">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
                         <label class="form-label">Уровень шума *</label>
                         <select class="form-select" id="place-noise-level" required>
                             <option value="1">Очень тихо</option>
@@ -742,17 +728,10 @@
                             <option value="4">Очень шумно</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Статус</label>
-                        <select class="form-select" id="place-status">
-                            <option value="open">Открыто</option>
-                            <option value="closed">Закрыто</option>
-                        </select>
-                    </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Часы работы</label>
-                    <input type="text" class="form-input" id="place-hours" placeholder="08:00-22:00 или 24/7">
+                    <label class="form-label">Часы работы (через запятую, например: 10-13, 13-18)</label>
+                    <input type="text" class="form-input" id="place-hours" placeholder="10-13, 13-18">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Удобства</label>
@@ -769,7 +748,10 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Теги (через запятую)</label>
-                    <input type="text" class="form-input" id="place-tags" placeholder="Тихая музыка, Большие столы">
+                    <div class="tags-autocomplete-wrapper">
+                        <input type="text" class="form-input" id="place-tags" placeholder="Тихая музыка, Большие столы" autocomplete="off">
+                        <div class="autocomplete-dropdown" id="tags-autocomplete"></div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-cancel" onclick="closeModal()">Отмена</button>
@@ -930,7 +912,6 @@
             return `
                 <div style="padding: 10px;">
                     <h3 style="margin: 0 0 10px 0;">${place.name}</h3>
-                    <p style="margin: 5px 0;"><strong>Тип:</strong> ${getTypeLabel(place.type)}</p>
                     <p style="margin: 5px 0;"><strong>Адрес:</strong> ${place.address || 'Загрузка...'}</p>
                     <p style="margin: 5px 0;"><strong>Рейтинг:</strong> ${place.rating}</p>
                     <p style="margin: 5px 0;"><strong>Уровень шума:</strong> ${getNoiseLabel(place.noise_level)}</p>
@@ -968,12 +949,6 @@
                 amenityIcons.push('<svg class="amenity-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C6.48 10.94 6.5 10.5 6.5 10c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .5.02.94.31 2.22.02.04-.12.26.07.12.19-.34.2-.66-.38-.66H12l-1 7zm5-13.5V9h2V7.5h-2zm-4-3V6h2V4.5h-2z"/></svg>');
             }
 
-            const typeIcon = {
-                cafe: '☕',
-                library: '📚',
-                coworking: '💼'
-            }[place.type] || '📍';
-
             card.innerHTML = `
                 <button class="delete-btn" onclick="deletePlace(${place.id})">✕</button>
                 <div class="place-header">
@@ -984,16 +959,9 @@
                             <span>${place.rating || 0}</span>
                         </div>
                     </div>
-                    <div class="place-status ${place.status === 'open' ? 'status-open' : 'status-closed'}">
-                        ${place.status === 'open' ? 'Открыто' : 'Закрыто'}
-                    </div>
-                </div>
-                <div class="place-type">
-                    <span>${typeIcon}</span>
-                    <span>${getTypeLabel(place.type)}</span>
                 </div>
                 <div class="place-address">${place.address || 'Загрузка адреса...'}</div>
-                ${place.hours ? `<div class="place-hours">${place.hours}</div>` : ''}
+                ${place.hours && place.hours.length > 0 ? `<div class="place-hours">${place.hours.join(', ')}</div>` : ''}
                 <div class="noise-indicator">
                     <div class="noise-bars">${noiseBars}</div>
                     <span class="noise-text">${getNoiseLabel(place.noise_level)}</span>
@@ -1013,14 +981,6 @@
         }
 
         // Helper functions
-        function getTypeLabel(type) {
-            const labels = {
-                cafe: 'Кафе',
-                library: 'Библиотека',
-                coworking: 'Коворкинг'
-            };
-            return labels[type] || type;
-        }
 
         function getNoiseLabel(level) {
             const labels = {
@@ -1034,19 +994,15 @@
 
         // Filter places
         function filterPlaces() {
-            const typeFilter = document.getElementById('place-type-filter').value;
             const noiseFilter = parseInt(document.getElementById('noise-slider').value);
             const wifiFilter = document.getElementById('wifi-filter').checked;
             const outletsFilter = document.getElementById('outlets-filter').checked;
-            const openNowFilter = document.getElementById('open-now-filter').checked;
             const searchQuery = document.getElementById('search-input').value.toLowerCase();
 
             filteredPlaces = places.filter(place => {
-                if (typeFilter !== 'all' && place.type !== typeFilter) return false;
                 if (place.noise_level > noiseFilter) return false;
                 if (wifiFilter && !place.amenities.includes('wifi')) return false;
                 if (outletsFilter && !place.amenities.includes('outlets')) return false;
-                if (openNowFilter && place.status !== 'open') return false;
                 if (searchQuery && !place.name.toLowerCase().includes(searchQuery) && 
                     !(place.address && place.address.toLowerCase().includes(searchQuery))) return false;
                 return true;
@@ -1098,11 +1054,12 @@
             formData.append('latitude', tempCoords[0]);
             formData.append('longitude', tempCoords[1]);
             formData.append('name', document.getElementById('place-name').value);
-            formData.append('type', document.getElementById('place-type').value);
             formData.append('noise_level', document.getElementById('place-noise-level').value);
-            formData.append('rating', document.getElementById('place-rating').value || 0);
-            formData.append('status', document.getElementById('place-status').value);
-            formData.append('hours', document.getElementById('place-hours').value || '');
+
+            // Parse hours input: "10-13, 13-18" -> ["10-13", "13-18"]
+            const hoursInput = document.getElementById('place-hours').value || '';
+            const hours = hoursInput ? hoursInput.split(',').map(h => h.trim()).filter(h => h) : [];
+            formData.append('hours', JSON.stringify(hours));
 
             const amenities = [];
             if (document.getElementById('form-wifi').checked) amenities.push('wifi');
@@ -1171,21 +1128,144 @@
             }
         }
 
+        // Tag autocomplete functionality
+        let autocompleteTimeout = null;
+        let selectedAutocompleteIndex = -1;
+        const tagsInput = document.getElementById('place-tags');
+        const autocompleteDropdown = document.getElementById('tags-autocomplete');
+
+        function getCurrentTagInput() {
+            const value = tagsInput.value;
+            const cursorPos = tagsInput.selectionStart;
+            const textBeforeCursor = value.substring(0, cursorPos);
+            const lastComma = textBeforeCursor.lastIndexOf(',');
+            const currentTag = textBeforeCursor.substring(lastComma + 1).trim();
+            return currentTag;
+        }
+
+        function getTagsBeforeCursor() {
+            const value = tagsInput.value;
+            const cursorPos = tagsInput.selectionStart;
+            const textBeforeCursor = value.substring(0, cursorPos);
+            const lastComma = textBeforeCursor.lastIndexOf(',');
+            return textBeforeCursor.substring(0, lastComma + 1);
+        }
+
+        async function fetchTagSuggestions(query) {
+            try {
+                const response = await fetch(`/api/tags/autocomplete?q=${encodeURIComponent(query)}&limit=10`);
+                const data = await response.json();
+                return data.tags || [];
+            } catch (error) {
+                console.error('Error fetching tag suggestions:', error);
+                return [];
+            }
+        }
+
+        function showAutocomplete(suggestions) {
+            autocompleteDropdown.innerHTML = '';
+            selectedAutocompleteIndex = -1;
+
+            if (suggestions.length === 0) {
+                autocompleteDropdown.classList.remove('show');
+                return;
+            }
+
+            suggestions.forEach((tag, index) => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                item.textContent = tag;
+                item.addEventListener('click', () => selectTag(tag));
+                autocompleteDropdown.appendChild(item);
+            });
+
+            autocompleteDropdown.classList.add('show');
+        }
+
+        function selectTag(tag) {
+            const tagsBefore = getTagsBeforeCursor();
+            const value = tagsInput.value;
+            const cursorPos = tagsInput.selectionStart;
+            const textAfterCursor = value.substring(cursorPos);
+            const lastComma = textAfterCursor.indexOf(',');
+            const tagsAfter = lastComma === -1 ? '' : textAfterCursor.substring(lastComma);
+
+            tagsInput.value = tagsBefore + tag + (tagsAfter ? ',' : (tagsAfter.length > 0 ? ',' : '')) + tagsAfter;
+            autocompleteDropdown.classList.remove('show');
+            tagsInput.focus();
+            
+            // Move cursor after the inserted tag
+            const newCursorPos = (tagsBefore + tag).length;
+            tagsInput.setSelectionRange(newCursorPos, newCursorPos);
+        }
+
+        tagsInput.addEventListener('input', function() {
+            const currentTag = getCurrentTagInput();
+            
+            clearTimeout(autocompleteTimeout);
+            
+            if (currentTag.length < 1) {
+                // Show popular tags if no input
+                autocompleteTimeout = setTimeout(async () => {
+                    const suggestions = await fetchTagSuggestions('');
+                    showAutocomplete(suggestions);
+                }, 300);
+            } else {
+                // Search for matching tags
+                autocompleteTimeout = setTimeout(async () => {
+                    const suggestions = await fetchTagSuggestions(currentTag);
+                    showAutocomplete(suggestions);
+                }, 300);
+            }
+        });
+
+        tagsInput.addEventListener('keydown', function(e) {
+            if (!autocompleteDropdown.classList.contains('show')) return;
+
+            const items = autocompleteDropdown.querySelectorAll('.autocomplete-item');
+            if (items.length === 0) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedAutocompleteIndex = Math.min(selectedAutocompleteIndex + 1, items.length - 1);
+                items.forEach((item, idx) => {
+                    item.classList.toggle('selected', idx === selectedAutocompleteIndex);
+                });
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedAutocompleteIndex = Math.max(selectedAutocompleteIndex - 1, -1);
+                items.forEach((item, idx) => {
+                    item.classList.toggle('selected', idx === selectedAutocompleteIndex);
+                });
+            } else if (e.key === 'Enter' && selectedAutocompleteIndex >= 0) {
+                e.preventDefault();
+                const selectedItem = items[selectedAutocompleteIndex];
+                if (selectedItem) {
+                    selectTag(selectedItem.textContent);
+                }
+            } else if (e.key === 'Escape') {
+                autocompleteDropdown.classList.remove('show');
+            }
+        });
+
+        // Close autocomplete when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!tagsInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
+                autocompleteDropdown.classList.remove('show');
+            }
+        });
+
         // Event listeners
-        document.getElementById('place-type-filter').addEventListener('change', filterPlaces);
         document.getElementById('noise-slider').addEventListener('input', function(e) {
             updateNoiseLabel(e.target.value);
             filterPlaces();
         });
         document.getElementById('wifi-filter').addEventListener('change', filterPlaces);
         document.getElementById('outlets-filter').addEventListener('change', filterPlaces);
-        document.getElementById('open-now-filter').addEventListener('change', filterPlaces);
         document.getElementById('reset-filters').addEventListener('click', function() {
-            document.getElementById('place-type-filter').value = 'all';
             document.getElementById('noise-slider').value = 4;
             document.getElementById('wifi-filter').checked = false;
             document.getElementById('outlets-filter').checked = false;
-            document.getElementById('open-now-filter').checked = false;
             document.getElementById('search-input').value = '';
             updateNoiseLabel(4);
             filterPlaces();
