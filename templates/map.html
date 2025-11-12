@@ -226,6 +226,132 @@
             color: #555;
         }
 
+        .range-slider {
+            position: relative;
+            width: 100%;
+            height: 42px;
+            margin-top: 12px;
+            padding: 12px 0;
+        }
+
+        .range-slider-track,
+        .range-slider-highlight {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 6px;
+            border-radius: 3px;
+        }
+
+        .range-slider-track {
+            background: #d0d6e1;
+        }
+
+        .range-slider-highlight {
+            background: #4a90e2;
+            width: 0;
+        }
+
+        .range-slider input[type="range"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            pointer-events: none;
+            background: none;
+            -webkit-appearance: none;
+        }
+
+        .range-slider input[type="range"]::-webkit-slider-thumb {
+            pointer-events: all;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 3px solid #4a90e2;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            -webkit-appearance: none;
+        }
+
+        .range-slider input[type="range"]::-moz-range-thumb {
+            pointer-events: all;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 3px solid #4a90e2;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .range-slider input[type="range"]::-ms-thumb {
+            pointer-events: all;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 3px solid #4a90e2;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .range-slider input[type="range"]::-webkit-slider-runnable-track,
+        .range-slider input[type="range"]::-moz-range-track,
+        .range-slider input[type="range"]::-ms-track {
+            height: 6px;
+            background: transparent;
+            border-radius: 3px;
+        }
+
+        .range-slider input[type="range"]::-ms-fill-lower,
+        .range-slider input[type="range"]::-ms-fill-upper {
+            background: transparent;
+        }
+
+        #rating-min-slider {
+            z-index: 2;
+        }
+
+        #rating-max-slider {
+            z-index: 3;
+        }
+
+        .rating-range-values {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .area-filter-btn {
+            width: 100%;
+            padding: 12px;
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
+            margin-bottom: 12px;
+        }
+
+        .area-filter-btn.selecting {
+            background: #f5f9ff;
+            border-color: #4a90e2;
+            color: #3669b3;
+        }
+
+        .area-filter-btn.active {
+            background: #4a90e2;
+            color: #ffffff;
+            border-color: #357abd;
+            box-shadow: 0 2px 6px rgba(74, 144, 226, 0.35);
+        }
+
         .reset-filters-btn {
             width: 100%;
             padding: 12px;
@@ -549,6 +675,39 @@
             color: #666;
         }
 
+        .filter-selected-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .filter-tag-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            background: #e9f2ff;
+            border-radius: 16px;
+            font-size: 12px;
+            color: #3669b3;
+            border: 1px solid #c8dcff;
+        }
+
+        .filter-tag-remove {
+            background: none;
+            border: none;
+            color: #3669b3;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .filter-tag-remove:hover {
+            color: #1f4d91;
+        }
+
         .tag-more-indicator {
             cursor: pointer;
             background: #e3f2fd;
@@ -785,6 +944,20 @@
             </div>
 
             <div class="filter-group">
+                <label class="filter-label">Рейтинг</label>
+                <div class="range-slider">
+                    <div class="range-slider-track"></div>
+                    <div class="range-slider-highlight" id="rating-range-highlight"></div>
+                    <input type="range" min="0" max="5" step="0.5" value="0" id="rating-min-slider">
+                    <input type="range" min="0" max="5" step="0.5" value="5" id="rating-max-slider">
+                </div>
+                <div class="rating-range-values">
+                    <span>от <span id="rating-min-label">0</span></span>
+                    <span>до <span id="rating-max-label">5</span></span>
+                </div>
+            </div>
+
+            <div class="filter-group">
                 <label class="filter-label">Удобства</label>
                 <ul class="amenities-list">
                     <li class="amenity-item">
@@ -805,7 +978,26 @@
                             <label for="bright-filter">Светлое место</label>
                         </div>
                     </li>
+                    <li class="amenity-item">
+                        <div class="amenity-checkbox">
+                            <input type="checkbox" id="open-now-filter">
+                            <label for="open-now-filter">Работают сейчас</label>
+                        </div>
+                    </li>
                </ul>
+            </div>
+
+            <div class="filter-group">
+                <button type="button" class="area-filter-btn" id="area-filter-btn">Выбрать область</button>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Теги</label>
+                <div class="tags-autocomplete-wrapper">
+                    <input type="text" class="form-input" id="filter-tags-input" placeholder="Начните вводить тег..." autocomplete="off">
+                    <div class="autocomplete-dropdown" id="filter-tags-autocomplete"></div>
+                </div>
+                <div class="filter-selected-tags" id="filter-tags-selected"></div>
             </div>
 
             <button class="reset-filters-btn" id="reset-filters">Сбросить фильтры</button>
@@ -901,6 +1093,17 @@
         let permanentPlacemarks = [];
         let places = [];
         let filteredPlaces = [];
+        let areaSelectionMode = false;
+        let areaMarkers = [];
+        let areaRectangle = null;
+        let areaBounds = null;
+        let areaFilterBtn = null;
+        let filterSelectedTags = [];
+        let filterTagsInput = null;
+        let filterTagsDropdown = null;
+        let filterTagsContainer = null;
+        let filterSelectedAutocompleteIndex = -1;
+        let filterAutocompleteTimeout = null;
 
         // Initialize Yandex Map
         function initMap() {
@@ -917,10 +1120,7 @@
                 });
 
                 // Click on map to set temporary marker
-                map.events.add('click', function(e) {
-                    const coords = e.get('coords');
-                    setTempMarker(coords);
-                });
+                map.events.add('click', handleMapClick);
 
                 loadPlaces();
             });
@@ -995,9 +1195,7 @@
                 if (response.ok) {
                     const data = await response.json();
                     places = data.places || [];
-                    filteredPlaces = [...places];
-                    updateMapMarkers();
-                    renderPlaces();
+                    filterPlaces();
                 }
             } catch (error) {
                 console.error('Error loading places:', error);
@@ -1263,19 +1461,307 @@
             return level.toString();
         }
 
+        function updateRatingRangeUI(triggeredBy = null) {
+            const minSlider = document.getElementById('rating-min-slider');
+            const maxSlider = document.getElementById('rating-max-slider');
+            const minLabel = document.getElementById('rating-min-label');
+            const maxLabel = document.getElementById('rating-max-label');
+            const highlight = document.getElementById('rating-range-highlight');
+
+            if (!minSlider || !maxSlider) return;
+
+            const sliderMax = parseFloat(maxSlider.max) || 5;
+            let minValue = parseFloat(minSlider.value);
+            let maxValue = parseFloat(maxSlider.value);
+
+            if (Number.isNaN(minValue)) minValue = 0;
+            if (Number.isNaN(maxValue)) maxValue = sliderMax;
+
+            if (minValue > maxValue) {
+                if (triggeredBy === 'min') {
+                    maxValue = minValue;
+                    maxSlider.value = maxValue;
+                } else if (triggeredBy === 'max') {
+                    minValue = maxValue;
+                    minSlider.value = minValue;
+                } else {
+                    const average = (minValue + maxValue) / 2;
+                    minValue = average;
+                    maxValue = average;
+                    minSlider.value = minValue;
+                    maxSlider.value = maxValue;
+                }
+            }
+
+            if (minLabel) {
+                minLabel.textContent = parseFloat(minValue.toFixed(1)).toString();
+            }
+
+            if (maxLabel) {
+                maxLabel.textContent = parseFloat(maxValue.toFixed(1)).toString();
+            }
+
+            if (highlight) {
+                const minPercent = (minValue / sliderMax) * 100;
+                const maxPercent = (maxValue / sliderMax) * 100;
+                const normalizedMin = Math.max(0, Math.min(minPercent, 100));
+                const normalizedMax = Math.max(0, Math.min(maxPercent, 100));
+                const left = Math.min(normalizedMin, normalizedMax);
+                const width = Math.abs(normalizedMax - normalizedMin);
+                highlight.style.left = `${left}%`;
+                highlight.style.width = `${width}%`;
+            }
+        }
+
+        function getRatingRange() {
+            const minSlider = document.getElementById('rating-min-slider');
+            const maxSlider = document.getElementById('rating-max-slider');
+
+            const minValue = minSlider ? parseFloat(minSlider.value) : 0;
+            const maxValue = maxSlider ? parseFloat(maxSlider.value) : 5;
+
+            return {
+                min: Number.isNaN(minValue) ? 0 : minValue,
+                max: Number.isNaN(maxValue) ? 5 : maxValue
+            };
+        }
+
+        function handleMapClick(e) {
+            const coords = e.get('coords');
+            if (areaSelectionMode) {
+                addAreaCorner(coords);
+            } else {
+                setTempMarker(coords);
+            }
+        }
+
+        function startAreaSelection() {
+            areaSelectionMode = true;
+            areaBounds = null;
+            clearAreaSelectionVisuals();
+            updateAreaButton('selecting');
+            filterPlaces();
+        }
+
+        function resetAreaSelection(skipFilterUpdate = false) {
+            areaSelectionMode = false;
+            areaBounds = null;
+            clearAreaSelectionVisuals();
+            updateAreaButton('default');
+            if (!skipFilterUpdate) {
+                filterPlaces();
+            }
+        }
+
+        function updateAreaButton(state) {
+            if (!areaFilterBtn) return;
+
+            areaFilterBtn.classList.remove('active', 'selecting');
+
+            if (state === 'selecting') {
+                areaFilterBtn.classList.add('selecting');
+                areaFilterBtn.textContent = 'Укажите 2 точки на карте';
+            } else if (state === 'selected') {
+                areaFilterBtn.classList.add('active');
+                areaFilterBtn.textContent = 'Область выбрана (изменить)';
+            } else {
+                areaFilterBtn.textContent = 'Выбрать область';
+            }
+        }
+
+        function clearAreaSelectionVisuals() {
+            if (!map) return;
+
+            if (areaRectangle) {
+                map.geoObjects.remove(areaRectangle);
+                areaRectangle = null;
+            }
+
+            if (areaMarkers.length > 0) {
+                areaMarkers.forEach(marker => map.geoObjects.remove(marker));
+                areaMarkers = [];
+            }
+        }
+
+        function addAreaCorner(coords) {
+            if (!map || !coords) return;
+
+            if (areaMarkers.length >= 2) {
+                clearAreaSelectionVisuals();
+            }
+
+            const marker = new ymaps.Placemark(
+                coords,
+                {},
+                {
+                    preset: 'islands#redCircleIcon',
+                    draggable: false
+                }
+            );
+
+            areaMarkers.push(marker);
+            map.geoObjects.add(marker);
+
+            if (areaMarkers.length === 2) {
+                const first = areaMarkers[0].geometry.getCoordinates();
+                const second = areaMarkers[1].geometry.getCoordinates();
+
+                const south = Math.min(first[0], second[0]);
+                const north = Math.max(first[0], second[0]);
+                const west = Math.min(first[1], second[1]);
+                const east = Math.max(first[1], second[1]);
+
+                const bounds = [
+                    [south, west],
+                    [north, east]
+                ];
+
+                if (areaRectangle) {
+                    map.geoObjects.remove(areaRectangle);
+                }
+
+                areaRectangle = new ymaps.Rectangle(
+                    bounds,
+                    {},
+                    {
+                        fillColor: 'rgba(74, 144, 226, 0.15)',
+                        strokeColor: '#4a90e2',
+                        strokeWidth: 2
+                    }
+                );
+
+                map.geoObjects.add(areaRectangle);
+                areaBounds = bounds;
+                areaSelectionMode = false;
+                updateAreaButton('selected');
+                filterPlaces();
+            } else {
+                updateAreaButton('selecting');
+            }
+        }
+
+        function isPlaceWithinArea(place) {
+            if (!areaBounds) return true;
+            if (!place) return false;
+
+            const [[south, west], [north, east]] = areaBounds;
+            const lat = place.latitude;
+            const lon = place.longitude;
+
+            if (typeof lat !== 'number' || typeof lon !== 'number') {
+                return false;
+            }
+
+            return lat >= south && lat <= north && lon >= west && lon <= east;
+        }
+
+        function parseTimeToMinutes(timeStr) {
+            if (!timeStr) return null;
+
+            const normalized = timeStr.trim();
+            if (!normalized) return null;
+
+            const parts = normalized.split(':');
+            const hours = parseInt(parts[0], 10);
+            let minutes = 0;
+
+            if (parts.length > 1) {
+                minutes = parseInt(parts[1], 10);
+            }
+
+            if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+                return null;
+            }
+
+            if (hours < 0 || hours > 24) {
+                return null;
+            }
+
+            if (minutes < 0 || minutes >= 60) {
+                return null;
+            }
+
+            if (hours === 24 && minutes > 0) {
+                return null;
+            }
+
+            if (hours === 24 && minutes === 0) {
+                return 24 * 60;
+            }
+
+            return hours * 60 + minutes;
+        }
+
+        function isPlaceOpenNow(place) {
+            if (!place || !Array.isArray(place.hours) || place.hours.length === 0) {
+                return false;
+            }
+
+            const now = new Date();
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+            return place.hours.some(range => {
+                if (!range) return false;
+
+                let [startStr, endStr] = range.split('-').map(part => part && part.trim());
+                let startMinutes = parseTimeToMinutes(startStr);
+                let endMinutes = parseTimeToMinutes(endStr);
+
+                if (startMinutes === null || endMinutes === null) {
+                    const tokens = range.match(/\d{1,2}(?::\d{2})?/g);
+                    if (!tokens || tokens.length < 2) {
+                        return false;
+                    }
+                    startMinutes = parseTimeToMinutes(tokens[0]);
+                    endMinutes = parseTimeToMinutes(tokens[1]);
+                    if (startMinutes === null || endMinutes === null) {
+                        return false;
+                    }
+                }
+
+                if (startMinutes === endMinutes) {
+                    // Assume operates 24/7
+                    return true;
+                }
+
+                if (endMinutes > startMinutes) {
+                    if (endMinutes === 24 * 60) {
+                        return currentMinutes >= startMinutes;
+                    }
+                    return currentMinutes >= startMinutes && currentMinutes < endMinutes;
+                }
+
+                // Overnight schedule (e.g., 22-04)
+                return currentMinutes >= startMinutes || currentMinutes < endMinutes;
+            });
+        }
+
         // Filter places
         function filterPlaces() {
             const noiseFilter = parseInt(document.getElementById('noise-slider').value);
             const wifiFilter = document.getElementById('wifi-filter').checked;
             const outletsFilter = document.getElementById('outlets-filter').checked;
             const brightFilter = document.getElementById('bright-filter').checked;
+            const openNowFilter = document.getElementById('open-now-filter').checked;
+            const { min: ratingMin, max: ratingMax } = getRatingRange();
+            const hasTagFilter = filterSelectedTags.length > 0;
             const searchQuery = document.getElementById('search-input').value.toLowerCase();
 
             filteredPlaces = places.filter(place => {
                 if (place.noise_level > noiseFilter) return false;
+                const rawRating = typeof place.rating === 'number' ? place.rating : parseFloat(place.rating);
+                const placeRating = Number.isNaN(rawRating) ? 0 : rawRating;
+                if (placeRating < ratingMin || placeRating > ratingMax) return false;
                 if (wifiFilter && !place.amenities.includes('wifi')) return false;
                 if (outletsFilter && !place.amenities.includes('outlets')) return false;
                 if (brightFilter && !place.amenities.includes('bright')) return false;
+                if (!isPlaceWithinArea(place)) return false;
+                if (openNowFilter && !isPlaceOpenNow(place)) return false;
+                if (hasTagFilter) {
+                    const placeTags = Array.isArray(place.tags) ? place.tags : [];
+                    const matchesAllTags = filterSelectedTags.every(tag => placeTags.includes(tag));
+                    if (!matchesAllTags) return false;
+                }
                 if (searchQuery && !place.name.toLowerCase().includes(searchQuery) && 
                     !(place.address && place.address.toLowerCase().includes(searchQuery))) return false;
                 return true;
@@ -1575,12 +2061,110 @@
 
         // Close autocomplete when clicking outside
         document.addEventListener('click', function(e) {
-            if (!tagsInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
-                autocompleteDropdown.classList.remove('show');
+            if (tagsInput && autocompleteDropdown) {
+                if (!tagsInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
+                    autocompleteDropdown.classList.remove('show');
+                }
+            }
+
+            if (filterTagsInput && filterTagsDropdown) {
+                if (!filterTagsInput.contains(e.target) && !filterTagsDropdown.contains(e.target)) {
+                    filterTagsDropdown.classList.remove('show');
+                }
             }
         });
 
+        // Filter tags functions
+        function renderFilterSelectedTags() {
+            if (!filterTagsContainer) return;
+
+            filterTagsContainer.innerHTML = '';
+
+            if (filterSelectedTags.length === 0) {
+                filterTagsContainer.style.display = 'none';
+                return;
+            }
+
+            filterTagsContainer.style.display = 'flex';
+
+            filterSelectedTags.forEach(tag => {
+                const chip = document.createElement('div');
+                chip.className = 'filter-tag-chip';
+                chip.innerHTML = `
+                    <span>${escapeHtml(tag)}</span>
+                    <button class="filter-tag-remove" type="button" aria-label="Удалить тег ${escapeHtml(tag)}">×</button>
+                `;
+                chip.querySelector('.filter-tag-remove').addEventListener('click', () => {
+                    removeFilterTag(tag);
+                });
+                filterTagsContainer.appendChild(chip);
+            });
+        }
+
+        function addFilterTag(tag) {
+            if (!tag) return;
+            const normalizedTag = tag.trim();
+            if (!normalizedTag) return;
+
+            if (!filterSelectedTags.includes(normalizedTag)) {
+                filterSelectedTags.push(normalizedTag);
+                renderFilterSelectedTags();
+                filterPlaces();
+            }
+
+            if (filterTagsInput) {
+                filterTagsInput.value = '';
+                filterTagsInput.focus();
+            }
+
+            if (filterTagsDropdown) {
+                filterTagsDropdown.classList.remove('show');
+            }
+
+            filterSelectedAutocompleteIndex = -1;
+        }
+
+        function removeFilterTag(tag) {
+            filterSelectedTags = filterSelectedTags.filter(t => t !== tag);
+            renderFilterSelectedTags();
+            filterPlaces();
+        }
+
+        function showFilterAutocomplete(suggestions) {
+            if (!filterTagsDropdown) return;
+
+            filterTagsDropdown.innerHTML = '';
+            filterSelectedAutocompleteIndex = -1;
+
+            const availableSuggestions = suggestions
+                .filter(tag => !filterSelectedTags.includes(tag));
+
+            if (availableSuggestions.length === 0) {
+                filterTagsDropdown.classList.remove('show');
+                return;
+            }
+
+            availableSuggestions.forEach(tag => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                item.textContent = tag;
+                item.addEventListener('click', () => addFilterTag(tag));
+                filterTagsDropdown.appendChild(item);
+            });
+
+            filterTagsDropdown.classList.add('show');
+        }
+
         // Event listeners
+        const ratingMinSlider = document.getElementById('rating-min-slider');
+        const ratingMaxSlider = document.getElementById('rating-max-slider');
+        filterTagsInput = document.getElementById('filter-tags-input');
+        filterTagsDropdown = document.getElementById('filter-tags-autocomplete');
+        filterTagsContainer = document.getElementById('filter-tags-selected');
+        if (filterTagsContainer) {
+            filterTagsContainer.style.display = 'none';
+        }
+
         document.getElementById('noise-slider').addEventListener('input', function(e) {
             updateNoiseLabel(e.target.value, 'noise-value');
             filterPlaces();
@@ -1593,12 +2177,109 @@
         document.getElementById('wifi-filter').addEventListener('change', filterPlaces);
         document.getElementById('outlets-filter').addEventListener('change', filterPlaces);
         document.getElementById('bright-filter').addEventListener('change', filterPlaces);
+        areaFilterBtn = document.getElementById('area-filter-btn');
+        if (areaFilterBtn) {
+            updateAreaButton('default');
+            areaFilterBtn.addEventListener('click', function() {
+                if (areaSelectionMode) {
+                    resetAreaSelection();
+                } else {
+                    startAreaSelection();
+                }
+            });
+        }
+        if (ratingMinSlider && ratingMaxSlider) {
+            const onMinInput = () => {
+                updateRatingRangeUI('min');
+                filterPlaces();
+            };
+            const onMaxInput = () => {
+                updateRatingRangeUI('max');
+                filterPlaces();
+            };
+            ratingMinSlider.addEventListener('input', onMinInput);
+            ratingMaxSlider.addEventListener('input', onMaxInput);
+        }
+        document.getElementById('open-now-filter').addEventListener('change', filterPlaces);
+        if (filterTagsInput) {
+            const handleFilterTagSuggestions = async (query) => {
+                const suggestions = await fetchTagSuggestions(query);
+                showFilterAutocomplete(suggestions);
+            };
+
+            filterTagsInput.addEventListener('input', function() {
+                const query = filterTagsInput.value.trim();
+                clearTimeout(filterAutocompleteTimeout);
+                filterAutocompleteTimeout = setTimeout(() => {
+                    handleFilterTagSuggestions(query);
+                }, 250);
+            });
+
+            filterTagsInput.addEventListener('focus', function() {
+                if (filterTagsInput.value.trim() === '') {
+                    clearTimeout(filterAutocompleteTimeout);
+                    filterAutocompleteTimeout = setTimeout(() => {
+                        handleFilterTagSuggestions('');
+                    }, 0);
+                }
+            });
+
+            filterTagsInput.addEventListener('keydown', function(e) {
+                if (!filterTagsDropdown) return;
+
+                const items = filterTagsDropdown.querySelectorAll('.autocomplete-item');
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (!filterTagsDropdown.classList.contains('show')) {
+                        handleFilterTagSuggestions(filterTagsInput.value.trim());
+                        return;
+                    }
+                    filterSelectedAutocompleteIndex = Math.min(filterSelectedAutocompleteIndex + 1, items.length - 1);
+                    items.forEach((item, idx) => {
+                        item.classList.toggle('selected', idx === filterSelectedAutocompleteIndex);
+                    });
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (!filterTagsDropdown.classList.contains('show')) return;
+                    filterSelectedAutocompleteIndex = Math.max(filterSelectedAutocompleteIndex - 1, -1);
+                    items.forEach((item, idx) => {
+                        item.classList.toggle('selected', idx === filterSelectedAutocompleteIndex);
+                    });
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (filterTagsDropdown.classList.contains('show') && filterSelectedAutocompleteIndex >= 0) {
+                        const selectedItem = items[filterSelectedAutocompleteIndex];
+                        if (selectedItem) {
+                            addFilterTag(selectedItem.textContent);
+                        }
+                    } else {
+                        addFilterTag(filterTagsInput.value);
+                    }
+                } else if (e.key === 'Escape') {
+                    filterTagsDropdown.classList.remove('show');
+                } else if (e.key === 'Backspace' && filterTagsInput.value === '' && filterSelectedTags.length > 0) {
+                    filterSelectedTags.pop();
+                    renderFilterSelectedTags();
+                    filterPlaces();
+                }
+            });
+        }
         document.getElementById('reset-filters').addEventListener('click', function() {
             document.getElementById('noise-slider').value = 9;
             document.getElementById('wifi-filter').checked = false;
             document.getElementById('outlets-filter').checked = false;
             document.getElementById('bright-filter').checked = false;
             document.getElementById('search-input').value = '';
+            document.getElementById('open-now-filter').checked = false;
+            filterSelectedTags = [];
+            renderFilterSelectedTags();
+            if (filterTagsInput) filterTagsInput.value = '';
+            if (filterTagsDropdown) filterTagsDropdown.classList.remove('show');
+            if (ratingMinSlider) ratingMinSlider.value = 0;
+            if (ratingMaxSlider) ratingMaxSlider.value = 5;
+            updateRatingRangeUI();
+            resetAreaSelection(true);
             updateNoiseLabel(9, 'noise-value');
             filterPlaces();
         });
@@ -1628,6 +2309,8 @@
             initMap();
             updateNoiseLabel(9, 'noise-value');
             updateNoiseLabel(0, 'place-noise-value');
+            updateRatingRangeUI();
+            renderFilterSelectedTags();
         });
     </script>
 </body>
