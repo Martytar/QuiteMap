@@ -220,19 +220,66 @@ async def logout():
 
 # Validation functions
 def validate_hours_format(hours_list: list) -> tuple[bool, str]:
-    """Validate hours format. Each hour should be in format 'HH-HH' or 'HH:MM-HH:MM'"""
+    """Validate hours format. Each hour should be in format 'HH-HH' or 'HH:MM-HH:MM'.
+    Normalizes single-digit hours to two digits (e.g., '0-24' -> '00-24').
+    Validates that left side is less than or equal to right side."""
     if not isinstance(hours_list, list):
         return False, "Hours must be a list"
     
     import re
-    # Pattern: HH-HH or HH:MM-HH:MM (24-hour format)
-    pattern = r'^([0-1]?[0-9]|2[0-3])(:([0-5][0-9]))?\-([0-1]?[0-9]|2[0-3])(:([0-5][0-9]))?$'
+    # allows "HH-HH", "HH:MM-HH:MM" and also "24" or "24:00"
+    pattern = r'^(?:([01]?\d|2[0-3])(?::([0-5][0-9]))?|24(?::00)?)\-(?:([01]?\d|2[0-3])(?::([0-5][0-9]))?|24(?::00)?)$'
     
-    for hour_range in hours_list:
+    def normalize_time(time_str: str) -> str:
+        """Normalize time string: '0' -> '00', '5' -> '05', etc."""
+        if ':' in time_str:
+            hour, minute = time_str.split(':')
+            return f"{int(hour):02d}:{minute}"
+        else:
+            return f"{int(time_str):02d}"
+    
+    def time_to_minutes(time_str: str) -> int:
+        """Convert time string to minutes since midnight for comparison."""
+        if time_str == '24' or time_str == '24:00':
+            return 24 * 60  # 1440 minutes
+        if ':' in time_str:
+            parts = time_str.split(':')
+            hour = int(parts[0])
+            minute = int(parts[1])
+            return hour * 60 + minute
+        else:
+            return int(time_str) * 60
+    
+    for i, hour_range in enumerate(hours_list):
         if not isinstance(hour_range, str):
             return False, f"Each hour range must be a string, got: {type(hour_range)}"
-        if not re.match(pattern, hour_range.strip()):
+        
+        hour_range = hour_range.strip()
+        if not re.match(pattern, hour_range):
             return False, f"Invalid hour format: '{hour_range}'. Expected format: '10-13' or '10:00-13:00'"
+        
+        # Split into start and end times
+        parts = hour_range.split('-')
+        if len(parts) != 2:
+            return False, f"Invalid hour format: '{hour_range}'. Expected format: 'HH-HH' or 'HH:MM-HH:MM'"
+        
+        start_time = parts[0].strip()
+        end_time = parts[1].strip()
+        
+        # Normalize times (0 -> 00, 5 -> 05, etc.)
+        start_normalized = normalize_time(start_time)
+        end_normalized = normalize_time(end_time)
+        
+        # Validate that start <= end
+        start_minutes = time_to_minutes(start_normalized)
+        end_minutes = time_to_minutes(end_normalized)
+        
+        # Ensure start time is less than or equal to end time
+        if start_minutes > end_minutes:
+            return False, f"Start time must be less than or equal to end time: '{hour_range}' (start: {start_normalized}, end: {end_normalized})"
+        
+        # Update the list with normalized format
+        hours_list[i] = f"{start_normalized}-{end_normalized}"
     
     return True, ""
 
