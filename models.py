@@ -22,7 +22,9 @@ class User(Base):
     username = Column(String(50), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
     full_name = Column(String(100), nullable=True)
-    is_active = Column(Boolean, default=True)
+    telegram_handle = Column(String(100), nullable=True, index=True)
+    activation_token = Column(String(255), nullable=True, index=True)
+    is_active = Column(Boolean, default=False)  # Changed default to False for email activation
     is_superuser = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -74,3 +76,13 @@ class Rating(Base):
     __table_args__ = (
         UniqueConstraint('user_id', 'place_id', name='uq_user_place_rating'),
     )
+
+class PendingRegistration(Base):
+    __tablename__ = "pending_registrations"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(50), nullable=False)
+    telegram_handle = Column(String(100), nullable=False, index=True)
+    hashed_password = Column(String(255), nullable=False)
+    confirmation_token = Column(String(255), unique=True, nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    expires_at = Column(DateTime(timezone=True), nullable=False)

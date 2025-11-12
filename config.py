@@ -33,6 +33,15 @@ class Settings:
     # Yandex Maps API Key
     YANDEX_MAPS_API_KEY: str = os.getenv("YANDEX_MAPS_API_KEY", "")
     
+    # Telegram Bot API Key
+    TG_BOT_API_KEY: str = os.getenv("TG_BOT_API_KEY", "")
+    
+    # Telegram Bot Username (without @)
+    TG_BOT_USERNAME: str = os.getenv("TG_BOT_USERNAME", "")
+    
+    # Application base URL for activation links
+    BASE_URL: str = os.getenv("BASE_URL", "http://localhost:8000")
+    
     # Database configuration (can be overridden via env vars)
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL",

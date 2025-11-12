@@ -15,7 +15,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import secrets
 from config import settings
-from models import User, Place, Rating, Tag, place_tags
+from models import User, Place, Rating, Tag, place_tags, PendingRegistration
 
 app = FastAPI(title="QuiteMap", description="Interactive Maps with Authentication")
 
@@ -110,7 +110,10 @@ async def read_root(request: Request, db: Session = Depends(get_db)):
     user = get_user_from_token(request, db)
     if user:
         return RedirectResponse(url="/map")
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "tg_bot_username": settings.TG_BOT_USERNAME or "quite_map_register_bot"
+    })
 
 @app.get("/map", response_class=HTMLResponse)
 async def map(request: Request, db: Session = Depends(get_db)):
@@ -128,37 +131,165 @@ async def map(request: Request, db: Session = Depends(get_db)):
 @app.post("/register")
 async def register(
     username: str = Form(...),
+    telegram_handle: str = Form(...),
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    """Register new user"""
+    """Create pending registration - user will confirm via Telegram bot"""
     try:
-        existing_user = db.query(User).filter(
+        # Normalize inputs
+        username = username.strip()
+        telegram_handle = telegram_handle.lstrip('@').strip()
+        password = password.strip()
+        
+        # Validate inputs
+        if not username or len(username) < 3:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Username must be at least 3 characters"}
+            )
+        
+        if len(username) > 50:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Username must be 50 characters or less"}
+            )
+        
+        if not telegram_handle:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Telegram handle is required"}
+            )
+        
+        if not password or len(password) < 6:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Password must be at least 6 characters"}
+            )
+        
+        # Check if username already exists
+        existing_user_by_username = db.query(User).filter(
             User.username == username
         ).first()
         
-        if existing_user:
+        if existing_user_by_username:
             return JSONResponse(
                 status_code=400,
                 content={"detail": "Username already registered"}
             )
         
-        hashed_password = get_password_hash(password)
-        user = User(
-            username=username,
-            hashed_password=hashed_password,
-            is_active=True
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
+        # Check if telegram handle already exists
+        existing_user_by_handle = db.query(User).filter(
+            User.telegram_handle == telegram_handle
+        ).first()
         
-        return {"message": "User created successfully", "user_id": user.id}
+        if existing_user_by_handle:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "This Telegram handle is already registered"}
+            )
+        
+        # Check if there's already a pending registration for this telegram handle
+        existing_pending = db.query(PendingRegistration).filter(
+            PendingRegistration.telegram_handle == telegram_handle
+        ).first()
+        
+        if existing_pending:
+            # Check if expired - ensure timezone-aware comparison
+            expires_at = existing_pending.expires_at
+            if expires_at.tzinfo is None:
+                # Make timezone-aware if naive (SQLite issue)
+                expires_at = expires_at.replace(tzinfo=timezone.utc)
+            
+            if expires_at < datetime.now(timezone.utc):
+                db.delete(existing_pending)
+                db.commit()
+            else:
+                # Update existing pending registration with new data
+                existing_pending.username = username
+                existing_pending.hashed_password = get_password_hash(password)
+                db.commit()
+                bot_username = settings.TG_BOT_USERNAME or "quite_map_register_bot"
+                return {
+                    "message": f"Registration request updated. Please go to Telegram bot @{bot_username} and use /start or /activate."
+                }
+        
+        # Hash password
+        hashed_password = get_password_hash(password)
+        
+        # Generate confirmation token
+        confirmation_token = secrets.token_urlsafe(32)
+        
+        # Create pending registration (expires in 1 hour)
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+        pending_reg = PendingRegistration(
+            username=username,
+            telegram_handle=telegram_handle,
+            hashed_password=hashed_password,
+            confirmation_token=confirmation_token,
+            expires_at=expires_at
+        )
+        
+        db.add(pending_reg)
+        db.commit()
+        db.refresh(pending_reg)
+        
+        bot_username = settings.TG_BOT_USERNAME or "quite_map_register_bot"
+        return {
+            "message": f"Registration request created. Please go to Telegram bot @{bot_username} and use /start or /activate."
+        }
     
     except Exception as e:
+        db.rollback()
         return JSONResponse(
             status_code=500,
             content={"detail": f"Registration error: {str(e)}"}
+        )
+
+@app.get("/activate/{token}")
+async def activate_account(
+    token: str,
+    db: Session = Depends(get_db)
+):
+    """Activate user account using activation token"""
+    try:
+        user = db.query(User).filter(User.activation_token == token).first()
+        
+        if not user:
+            return JSONResponse(
+                status_code=404,
+                content={"detail": "Invalid or expired activation token"}
+            )
+        
+        if user.is_active:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Account is already activated"}
+            )
+        
+        # Activate user and clear token
+        user.is_active = True
+        user.activation_token = None
+        db.commit()
+        
+        return HTMLResponse(
+            content=f"""
+            <html>
+                <head><title>Account Activated</title></head>
+                <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+                    <h1>Account Activated Successfully!</h1>
+                    <p>Your account <strong>{user.username}</strong> has been activated.</p>
+                    <p><a href="/">Click here to login</a></p>
+                </body>
+            </html>
+            """
+        )
+    
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Activation error: {str(e)}"}
         )
 
 @app.post("/login")

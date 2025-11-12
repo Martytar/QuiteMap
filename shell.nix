@@ -20,6 +20,7 @@ pkgs.mkShell {
         python-jose # JWT
         python-multipart
         bcrypt
+        python-telegram-bot
       ]))
   ];
 

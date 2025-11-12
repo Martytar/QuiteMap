@@ -8,6 +8,7 @@
 !models.py
 !config.py
 !requirements.txt
+!quite_map_register_bot.py
 !justfile
 
 # Documentation
