@@ -16,6 +16,7 @@ Then run the application:
 
 ```bash
 uvicorn main:app
+python3 ./quite_map_register_bot.py
 ```
 
 ### Using pip
@@ -30,6 +31,7 @@ Run the application:
 
 ```bash
 uvicorn main:app
+python3 ./quite_map_register_bot.py
 ```
 
 The `--reload` flag enables auto-reload on code changes, perfect for development.
