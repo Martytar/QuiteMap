@@ -112,7 +112,8 @@ async def read_root(request: Request, db: Session = Depends(get_db)):
         return RedirectResponse(url="/map")
     return templates.TemplateResponse("index.html", {
         "request": request,
-        "tg_bot_username": settings.TG_BOT_USERNAME or "quite_map_register_bot"
+        "tg_bot_username": settings.TG_BOT_USERNAME or "quite_map_register_bot",
+        "base_url": settings.BASE_URL
     })
 
 @app.get("/map", response_class=HTMLResponse)
