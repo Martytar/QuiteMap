@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuiteMap - Поиск тихих мест</title>
@@ -17,108 +18,281 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background-color: #f5f5f5;
             color: #333;
+            overflow: hidden;
         }
 
         .header {
-            background: white;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            background: white !important; /* Белый фон */
+            opacity: 1 !important; /* Полупрозрачность */
+            padding: 12px 20px !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            z-index: 2000 !important;
+            height: 60px !important;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+        }
+
+        .header * {
+            opacity: 1 !important;
+        }
+        .search-input {
+            background: rgba(255, 255, 255, 0.4) !important;
+            border: 1px solid rgba(224, 224, 224, 0.6) !important;
+            backdrop-filter: blur(5px) !important;
         }
 
         .header-left {
-            flex: 1;
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
+            flex: 1 !important;
+            max-width: 1400px !important;
+            margin: 0 auto !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            width: 100% !important;
         }
 
+
         .search-container {
-            flex: 1;
-            margin-right: 20px;
-            display: flex;
-            gap: 10px;
+            flex: 1 !important;
+            margin-right: 20px !important;
+            display: flex !important;
+            gap: 10px !important;
         }
 
         .search-input {
-            flex: 1;
-            padding: 12px 20px;
-            font-size: 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            outline: none;
-            transition: border-color 0.3s;
+            flex: 1 !important;
+            padding: 10px 16px !important;
+            font-size: 14px !important;
+            border: 1px solid rgba(224, 224, 224, 0.8) !important;
+            border-radius: 8px !important;
+            outline: none !important;
+            transition: all 0.3s !important;
+            background: rgba(255, 255, 255, 0.85) !important;
+            backdrop-filter: blur(10px) !important;
         }
 
         .search-input:focus {
-            border-color: #4a90e2;
+            border-color: #4a90e2 !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1) !important;
         }
 
         .search-btn {
-            padding: 12px 24px;
-            background: #4a90e2;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.3s;
+            padding: 10px 20px !important;
+            background: #4a90e2 !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 8px !important;
+            font-size: 14px !important;
+            font-weight: 500 !important;
+            cursor: pointer !important;
+            transition: all 0.3s !important;
         }
 
         .search-btn:hover {
-            background: #357abd;
+            background: #357abd !important;
+            transform: translateY(-1px) !important;
         }
 
         .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
         }
 
         .user-name {
-            font-weight: 500;
+            font-weight: 500 !important;
+            color: #333 !important;
         }
 
-        .btn {
-            padding: 8px 16px;
+        .add-place-btn {
+            background: linear-gradient(135deg, #4a90e2, #357abd) !important;
+            color: white !important;
+            padding: 8px 16px !important;
+            border: none !important;
+            border-radius: 6px !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+            cursor: pointer !important;
+            transition: all 0.3s !important;
+            display: none !important;
+            box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3) !important;
+        }
+
+        .add-place-btn:hover {
+            background: linear-gradient(135deg, #357abd, #2a5f9e) !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4) !important;
+        }
+
+        .add-place-btn.visible {
+            display: block !important;
+        }
+
+        .btn-secondary {
+            background: rgba(107, 114, 128, 0.9) !important;
+            color: white !important;
+            padding: 8px 16px !important;
+            border: none !important;
+            border-radius: 6px !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+            cursor: pointer !important;
+            transition: all 0.3s !important;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(75, 85, 99, 0.9) !important;
+        }
+
+        .side-panel {
+            position: fixed;
+            top: 60px;
+            width: 350px;
+            height: calc(100vh - 60px);
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .filters-panel {
+            left: 0;
+            transform: translateX(-100%);
+        }
+
+        .filters-panel.open {
+            transform: translateX(0);
+        }
+
+        .places-panel {
+            right: 0;
+            transform: translateX(100%);
+        }
+
+        .places-panel.open {
+            transform: translateX(0);
+        }
+
+        .panel-toggle {
+            position: fixed;
+            top: 80px;
+            z-index: 1001;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 0 8px 8px 0;
+            padding: 12px 15px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .panel-toggle:hover {
+            background: rgba(255, 255, 255, 0.98);
+            padding-right: 18px;
+        }
+
+        .filters-toggle {
+            left: 0;
+        }
+
+        .places-toggle {
+            right: 0;
+            border-radius: 8px 0 0 8px;
+        }
+
+        .places-toggle:hover {
+            padding-left: 18px;
+            padding-right: 15px;
+        }
+
+        .map-container {
+            position: fixed !important;
+            top: 60px !important; 
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            background: #e8e8e8 !important;
+            z-index: 1 !important; 
+        }
+
+        #yandex-map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .map-controls {
+            display: none;
+        }
+
+        .btn-primary {
+            background: #4a90e2;
+            color: white;
+            padding: 12px 20px;
             border: none;
             border-radius: 6px;
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
             transition: background 0.3s;
+            display: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
-        .btn-secondary {
-            background: #6b7280;
-            color: white;
+        .btn-primary:hover {
+            background: #357abd;
         }
 
-        .btn-secondary:hover {
-            background: #4b5563;
+        .btn-primary.visible {
+            display: block;
         }
 
-        .main-container {
+        .panel-header {
             display: flex;
-            max-width: 1400px;
-            margin: 20px auto;
-            gap: 20px;
-            padding: 0 20px;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
         }
 
-        .filters-sidebar {
-            width: 300px;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            height: fit-content;
+        .panel-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .close-panel {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-panel:hover {
+            color: #333;
+            background: #f5f5f5;
+            border-radius: 50%;
         }
 
         .filters-title {
@@ -138,17 +312,6 @@
             font-weight: 500;
             margin-bottom: 10px;
             color: #555;
-        }
-
-        .filter-select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 14px;
-            background: white;
-            cursor: pointer;
-            outline: none;
         }
 
         .noise-slider-container {
@@ -287,37 +450,6 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
-        .range-slider input[type="range"]::-ms-thumb {
-            pointer-events: all;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: #ffffff;
-            border: 3px solid #4a90e2;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-
-        .range-slider input[type="range"]::-webkit-slider-runnable-track,
-        .range-slider input[type="range"]::-moz-range-track,
-        .range-slider input[type="range"]::-ms-track {
-            height: 6px;
-            background: transparent;
-            border-radius: 3px;
-        }
-
-        .range-slider input[type="range"]::-ms-fill-lower,
-        .range-slider input[type="range"]::-ms-fill-upper {
-            background: transparent;
-        }
-
-        #rating-min-slider {
-            z-index: 2;
-        }
-
-        #rating-max-slider {
-            z-index: 3;
-        }
-
         .rating-range-values {
             display: flex;
             justify-content: space-between;
@@ -368,68 +500,11 @@
             background: #e0e0e0;
         }
 
-        .content-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .map-container {
-            width: 100%;
-            height: 400px;
-            background: #e8e8e8;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        #yandex-map {
-            width: 100%;
-            height: 100%;
-        }
-
-        .map-controls {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .btn-primary {
-            background: #4a90e2;
-            color: white;
-            padding: 10px 16px;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.3s;
-            display: none;
-        }
-
-        .btn-primary:hover {
-            background: #357abd;
-        }
-
-        .btn-primary.visible {
-            display: block;
-        }
-
-        /* Кнопка подтверждения в модальном окне всегда видна */
-        .modal-footer .btn-primary {
-            display: inline-block;
-        }
-
         .results-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 15px;
             padding: 0 4px;
         }
 
@@ -451,8 +526,8 @@
 
         .places-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
+            grid-template-columns: 1fr;
+            gap: 15px;
         }
 
         .place-card {
@@ -486,7 +561,6 @@
             color: #333;
             margin-bottom: 4px;
         }
-
 
         .place-rating {
             display: flex;
@@ -547,12 +621,6 @@
 
         .star {
             color: #ffc107;
-        }
-
-
-        .place-icon {
-            width: 16px;
-            height: 16px;
         }
 
         .place-address {
@@ -786,7 +854,6 @@
             border-color: #2563eb;
         }
 
-        /* Modal styles */
         .modal {
             display: none;
             position: fixed;
@@ -898,17 +965,38 @@
             background: #e0e0e0;
         }
 
-        @media (max-width: 1024px) {
-            .main-container {
-                flex-direction: column;
-            }
+        .modal-footer .btn-primary {
+            display: inline-block;
+            background: #4a90e2;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
 
-            .filters-sidebar {
+        .modal-footer .btn-primary:hover {
+            background: #357abd;
+        }
+
+        .main-container {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .side-panel {
                 width: 100%;
+                max-width: 320px;
             }
-
-            .places-grid {
-                grid-template-columns: 1fr;
+            
+            .panel-toggle span {
+                display: none;
+            }
+            
+            .panel-toggle {
+                padding: 12px 8px;
             }
         }
     </style>
@@ -921,17 +1009,27 @@
                 <button class="search-btn" id="search-btn">Искать</button>
             </div>
             <div class="user-info">
+                <button class="add-place-btn" id="add-place-btn">📍 Установить точку</button>
                 <span class="user-name">{{ user.username }}</span>
                 <button onclick="logout()" class="btn btn-secondary">Выйти</button>
             </div>
         </div>
     </div>
 
-    <div class="main-container">
-        <aside class="filters-sidebar">
-            <h2 class="filters-title">Фильтры</h2>
-            
+    <button class="panel-toggle filters-toggle" id="filters-toggle">
+        <span>📊 Фильтры</span>
+    </button>
 
+    <button class="panel-toggle places-toggle" id="places-toggle">
+        <span>📝 Список мест</span>
+    </button>
+
+    <div class="side-panel filters-panel" id="filters-panel">
+        <div class="panel-header">
+            <h2 class="panel-title">Фильтры</h2>
+            <button class="close-panel" onclick="closePanel('filters')">&times;</button>
+        </div>
+        <div class="filters-content">
             <div class="filter-group">
                 <label class="filter-label">Уровень шума</label>
                 <div class="noise-slider-container">
@@ -973,7 +1071,7 @@
                             <label for="outlets-filter">Розетки</label>
                         </div>
                     </li>
-                     <li class="amenity-item">
+                    <li class="amenity-item">
                         <div class="amenity-checkbox">
                             <input type="checkbox" id="bright-filter">
                             <label for="bright-filter">Светлое место</label>
@@ -983,12 +1081,6 @@
                         <div class="amenity-checkbox">
                             <input type="checkbox" id="open-now-filter">
                             <label for="open-now-filter">Работают сейчас</label>
-                        </div>
-                    </li>
-                    <li class="amenity-item">
-                        <div class="amenity-checkbox">
-                            <input type="checkbox" id="my-places-filter">
-                            <label for="my-places-filter">Мои места</label>
                         </div>
                     </li>
                </ul>
@@ -1008,16 +1100,15 @@
             </div>
 
             <button class="reset-filters-btn" id="reset-filters">Сбросить фильтры</button>
-        </aside>
+        </div>
+    </div>
 
-        <main class="content-area">
-            <div class="map-container">
-                <div id="yandex-map"></div>
-                <div class="map-controls">
-                    <button class="btn-primary" id="save-place-btn">Установить точку</button>
-                </div>
-            </div>
-
+    <div class="side-panel places-panel" id="places-panel">
+        <div class="panel-header">
+            <h2 class="panel-title">Найденные места</h2>
+            <button class="close-panel" onclick="closePanel('places')">&times;</button>
+        </div>
+        <div class="places-content">
             <div class="results-header">
                 <div class="results-count" id="results-count">Найдено мест: 0</div>
                 <select class="sort-select" id="sort-select">
@@ -1028,12 +1119,17 @@
             </div>
 
             <div class="places-grid" id="places-grid">
-                <!-- Place cards will be inserted here by JavaScript -->
             </div>
-        </main>
+        </div>
     </div>
 
-    <!-- Modal for adding/editing place -->
+    <div class="map-container">
+        <div id="yandex-map"></div>
+        <div class="map-controls">
+            <button class="btn-primary" id="save-place-btn">Установить точку</button>
+        </div>
+    </div>
+
     <div id="place-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1112,7 +1208,78 @@
         let filterSelectedAutocompleteIndex = -1;
         let filterAutocompleteTimeout = null;
 
-        // Initialize Yandex Map
+        let activePanel = null;
+
+        function togglePanel(panelType) {
+            const panel = document.getElementById(`${panelType}-panel`);
+            const otherPanelType = panelType === 'filters' ? 'places' : 'filters';
+            const otherPanel = document.getElementById(`${otherPanelType}-panel`);
+            
+            if (panel.classList.contains('open')) {
+                closePanel(panelType);
+            } else {
+                if (otherPanel.classList.contains('open')) {
+                    closePanel(otherPanelType);
+                }
+                panel.classList.add('open');
+                activePanel = panelType;
+            }
+        }
+
+        function closePanel(panelType) {
+            const panel = document.getElementById(`${panelType}-panel`);
+            panel.classList.remove('open');
+            if (activePanel === panelType) {
+                activePanel = null;
+            }
+        }
+
+        document.addEventListener('click', function(event) {
+            if (activePanel) {
+                const panel = document.getElementById(`${activePanel}-panel`);
+                const toggle = document.getElementById(`${activePanel}-toggle`);
+                
+                if (!panel.contains(event.target) && !toggle.contains(event.target)) {
+                    closePanel(activePanel);
+                }
+            }
+        });
+
+        function initHoverPanels() {
+            const panels = ['filters', 'places'];
+            
+            panels.forEach(panelType => {
+                const toggle = document.getElementById(`${panelType}-toggle`);
+                const panel = document.getElementById(`${panelType}-panel`);
+                
+                let hoverTimeout;
+                
+                toggle.addEventListener('mouseenter', function() {
+                    if (!panel.classList.contains('open')) {
+                        hoverTimeout = setTimeout(() => {
+                            togglePanel(panelType);
+                        }, 300);
+                    }
+                });
+                
+                toggle.addEventListener('mouseleave', function() {
+                    clearTimeout(hoverTimeout);
+                });
+                
+                panel.addEventListener('mouseenter', function() {
+                    clearTimeout(hoverTimeout);
+                });
+                
+                panel.addEventListener('mouseleave', function() {
+                    if (panel.classList.contains('open')) {
+                        hoverTimeout = setTimeout(() => {
+                            closePanel(panelType);
+                        }, 500);
+                    }
+                });
+            });
+        }
+
         function initMap() {
             if (typeof ymaps === 'undefined') {
                 console.error('Yandex Maps API not loaded');
@@ -1121,21 +1288,18 @@
 
             ymaps.ready(function() {
                 map = new ymaps.Map("yandex-map", {
-                    center: [55.7558, 37.6173], // Moscow center
+                    center: [55.7558, 37.6173],
                     zoom: 12,
                     controls: ['zoomControl', 'fullscreenControl']
                 });
 
-                // Click on map to set temporary marker
                 map.events.add('click', handleMapClick);
 
                 loadPlaces();
             });
         }
 
-        // Set temporary marker on map
         function setTempMarker(coords) {
-            // Remove existing temporary marker
             if (tempPlacemark) {
                 map.geoObjects.remove(tempPlacemark);
             }
@@ -1154,15 +1318,13 @@
             );
 
             map.geoObjects.add(tempPlacemark);
-            document.getElementById('save-place-btn').classList.add('visible');
+            document.getElementById('add-place-btn').classList.add('visible');
 
-            // Update position on drag
             tempPlacemark.events.add('dragend', function() {
                 tempCoords = tempPlacemark.geometry.getCoordinates();
             });
         }
 
-        // Geocode address and set temporary marker
         async function geocodeAddress(address) {
             if (!address.trim()) return;
 
@@ -1192,7 +1354,6 @@
             }
         }
 
-        // Load places from API
         async function loadPlaces() {
             try {
                 const response = await fetch('/api/places', {
@@ -1209,15 +1370,12 @@
             }
         }
 
-        // Update permanent markers on map
         function updateMapMarkers() {
             if (!map) return;
 
-            // Remove existing permanent markers
             permanentPlacemarks.forEach(pm => map.geoObjects.remove(pm));
             permanentPlacemarks = [];
 
-            // Add permanent markers
             filteredPlaces.forEach(place => {
                 // Use gray icon for temporary places (less than 5 ratings), blue for permanent
                 const iconPreset = place.is_temporary ? 'islands#grayDotIcon' : 'islands#blueDotIcon';
@@ -1236,7 +1394,6 @@
                 permanentPlacemarks.push(placemark);
             });
 
-            // Fit map to show all markers if there are places
             if (filteredPlaces.length > 0) {
                 const bounds = map.geoObjects.getBounds();
                 if (bounds) {
@@ -1248,7 +1405,6 @@
             }
         }
 
-        // Create balloon content for placemark
         function createBalloonContent(place) {
             const temporaryBadge = place.is_temporary 
                 ? `<p style="margin: 5px 0; color: #666; font-style: italic;"><strong>Временное место</strong> (${place.ratings_count || 0} отзывов, нужно 5)</p>`
@@ -1264,7 +1420,6 @@
             `;
         }
 
-        // Helper function to escape HTML
         function escapeHtml(text) {
             if (!text) return '';
             const div = document.createElement('div');
@@ -1272,7 +1427,6 @@
             return div.innerHTML;
         }
 
-        // Render place cards
         function renderPlaces() {
             const grid = document.getElementById('places-grid');
             grid.innerHTML = '';
@@ -1285,7 +1439,6 @@
             document.getElementById('results-count').textContent = `Найдено мест: ${filteredPlaces.length}`;
         }
 
-        // Create place card element
         function createPlaceCard(place) {
             const card = document.createElement('div');
             card.className = 'place-card';
@@ -1305,7 +1458,6 @@
                 amenityIcons.push('<img src="/static/brightness.png" alt="Светлое место" title="Светлое место" class="amenity-icon">');
             }
 
-            // Create star rating HTML
             const userRating = place.user_rating || null;
             const hasRated = userRating !== null;
             const starRatingHtml = hasRated 
@@ -1391,29 +1543,6 @@
             return card;
         }
 
-        // Focus map on a specific place
-        function focusMapOnPlace(place) {
-            if (!map || !place) return;
-            
-            const coords = [place.latitude, place.longitude];
-            
-            // Center map on place coordinates with zoom level 15
-            map.setCenter(coords, 15, {
-                duration: 300
-            });
-            
-            // Open balloon for the corresponding placemark if it exists
-            const placemark = permanentPlacemarks.find(pm => {
-                const pmCoords = pm.geometry.getCoordinates();
-                return Math.abs(pmCoords[0] - coords[0]) < 0.0001 && 
-                       Math.abs(pmCoords[1] - coords[1]) < 0.0001;
-            });
-            
-            if (placemark) {
-                placemark.balloon.open();
-            }
-        }
-
         // Helper functions
 
         function hoverStar(placeId, rating) {
@@ -1435,7 +1564,6 @@
             const starContainer = document.getElementById(`star-rating-${placeId}`);
             if (!starContainer) return;
             
-            // If there's a current rating, restore it; otherwise clear all
             if (currentRating !== null) {
                 const stars = starContainer.querySelectorAll('.star-btn');
                 stars.forEach((star, index) => {
@@ -1467,7 +1595,6 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    // Reload places to update ratings
                     await loadPlaces();
                 } else {
                     const errorData = await response.json();
@@ -1493,14 +1620,12 @@
             const isExpanded = expandBtn && expandBtn.style.display !== 'none';
             
             if (isExpanded) {
-                // Collapse: show only first 2 tags
                 tagsContainer.innerHTML = `
                     ${allTags.slice(0, 2).map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
                     <span class="tag tag-more-indicator" id="tag-more-${placeId}" onclick="toggleTags(${placeId})">+${allTags.length - 2}</span>
                     <span class="tag tag-expand-btn" id="tag-expand-${placeId}" onclick="toggleTags(${placeId})" style="display: none;"><img src="/static/left-align.png" alt="Свернуть"></span>
                 `;
             } else {
-                // Expand: show all tags
                 tagsContainer.innerHTML = `
                     ${allTags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
                     <span class="tag tag-expand-btn" id="tag-expand-${placeId}" onclick="toggleTags(${placeId})"><img src="/static/left-align.png" alt="Свернуть"></span>
@@ -1771,7 +1896,6 @@
                 }
 
                 if (startMinutes === endMinutes) {
-                    // Assume operates 24/7
                     return true;
                 }
 
@@ -1782,12 +1906,10 @@
                     return currentMinutes >= startMinutes && currentMinutes < endMinutes;
                 }
 
-                // Overnight schedule (e.g., 22-04)
                 return currentMinutes >= startMinutes || currentMinutes < endMinutes;
             });
         }
 
-        // Filter places
         function filterPlaces() {
             const noiseFilter = parseInt(document.getElementById('noise-slider').value);
             const wifiFilter = document.getElementById('wifi-filter').checked;
@@ -1820,7 +1942,6 @@
                 return true;
             });
 
-            // Sort places
             const sortBy = document.getElementById('sort-select').value;
             if (sortBy === 'rating') {
                 filteredPlaces.sort((a, b) => (b.rating || 0) - (a.rating || 0));
@@ -1834,7 +1955,6 @@
             updateMapMarkers();
         }
 
-        // Update noise slider label (shared function)
         function updateNoiseLabel(value, elementId = 'noise-value') {
             const element = document.getElementById(elementId);
             if (element) {
@@ -1842,17 +1962,14 @@
             }
         }
 
-        // Open modal for adding place
         function openModal() {
             if (!tempCoords) return;
-            // Reset form for create mode
             document.getElementById('place-id').value = '';
             document.getElementById('modal-title').textContent = 'Добавить место';
             document.getElementById('confirm-place-btn').textContent = 'Добавить';
             document.getElementById('place-modal').style.display = 'block';
         }
 
-        // Open modal for editing place
         function editPlace(placeId) {
             const place = places.find(p => p.id === placeId);
             if (!place) {
@@ -1860,54 +1977,44 @@
                 return;
             }
 
-            // Set form to edit mode
             document.getElementById('place-id').value = placeId;
             document.getElementById('modal-title').textContent = 'Редактировать место';
             document.getElementById('confirm-place-btn').textContent = 'Сохранить';
 
-            // Populate form fields
             document.getElementById('place-name').value = place.name;
             document.getElementById('place-noise-level').value = place.noise_level;
             updateNoiseLabel(place.noise_level, 'place-noise-value');
             document.getElementById('place-hours').value = place.hours ? place.hours.join(', ') : '';
             
-            // Set amenities checkboxes
             document.getElementById('form-wifi').checked = place.amenities.includes('wifi');
             document.getElementById('form-outlets').checked = place.amenities.includes('outlets');
             document.getElementById('form-bright').checked = place.amenities.includes('bright');
             
-            // Set tags
             document.getElementById('place-tags').value = place.tags ? place.tags.join(', ') : '';
 
-            // Show modal
             document.getElementById('place-modal').style.display = 'block';
         }
 
-        // Close modal
         function closeModal() {
             document.getElementById('place-modal').style.display = 'none';
             document.getElementById('place-form').reset();
             document.getElementById('place-id').value = '';
             document.getElementById('modal-title').textContent = 'Добавить место';
             document.getElementById('confirm-place-btn').textContent = 'Добавить';
-            // Reset noise slider to default
             document.getElementById('place-noise-level').value = 0;
             updateNoiseLabel(0, 'place-noise-value');
         }
 
-        // Save place (create or update)
         async function savePlace(event) {
             event.preventDefault();
             
             const placeId = document.getElementById('place-id').value;
             const isEditMode = placeId !== '';
 
-            // For create mode, we need tempCoords
             if (!isEditMode && !tempCoords) return;
 
             const formData = new FormData();
             
-            // Only add coordinates for create mode
             if (!isEditMode) {
                 formData.append('latitude', tempCoords[0]);
                 formData.append('longitude', tempCoords[1]);
@@ -1916,7 +2023,6 @@
             formData.append('name', document.getElementById('place-name').value);
             formData.append('noise_level', parseInt(document.getElementById('place-noise-level').value));
 
-            // Parse hours input: "10-13, 13-18" -> ["10-13", "13-18"]
             const hoursInput = document.getElementById('place-hours').value || '';
             const hours = hoursInput ? hoursInput.split(',').map(h => h.trim()).filter(h => h) : [];
             formData.append('hours', JSON.stringify(hours));
@@ -1942,12 +2048,11 @@
                 });
 
                 if (response.ok) {
-                    // Remove temporary marker if creating
                     if (!isEditMode && tempPlacemark) {
                         map.geoObjects.remove(tempPlacemark);
                         tempPlacemark = null;
                         tempCoords = null;
-                        document.getElementById('save-place-btn').classList.remove('visible');
+                        document.getElementById('add-place-btn').classList.remove('visible');
                     }
                     closeModal();
                     loadPlaces();
@@ -1961,7 +2066,6 @@
             }
         }
 
-        // Delete place
         async function deletePlace(placeId) {
             if (!confirm('Удалить это место?')) return;
 
@@ -1982,7 +2086,6 @@
             }
         }
 
-        // Logout
         async function logout() {
             try {
                 await fetch('/logout', { method: 'POST' });
@@ -1992,7 +2095,6 @@
             }
         }
 
-        // Tag autocomplete functionality
         let autocompleteTimeout = null;
         let selectedAutocompleteIndex = -1;
         const tagsInput = document.getElementById('place-tags');
@@ -2058,7 +2160,6 @@
             autocompleteDropdown.classList.remove('show');
             tagsInput.focus();
             
-            // Move cursor after the inserted tag
             const newCursorPos = (tagsBefore + tag).length;
             tagsInput.setSelectionRange(newCursorPos, newCursorPos);
         }
@@ -2069,13 +2170,11 @@
             clearTimeout(autocompleteTimeout);
             
             if (currentTag.length < 1) {
-                // Show popular tags if no input
                 autocompleteTimeout = setTimeout(async () => {
                     const suggestions = await fetchTagSuggestions('');
                     showAutocomplete(suggestions);
                 }, 300);
             } else {
-                // Search for matching tags
                 autocompleteTimeout = setTimeout(async () => {
                     const suggestions = await fetchTagSuggestions(currentTag);
                     showAutocomplete(suggestions);
@@ -2112,7 +2211,6 @@
             }
         });
 
-        // Close autocomplete when clicking outside
         document.addEventListener('click', function(e) {
             if (tagsInput && autocompleteDropdown) {
                 if (!tagsInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
@@ -2127,7 +2225,6 @@
             }
         });
 
-        // Filter tags functions
         function renderFilterSelectedTags() {
             if (!filterTagsContainer) return;
 
@@ -2208,7 +2305,6 @@
             filterTagsDropdown.classList.add('show');
         }
 
-        // Event listeners
         const ratingMinSlider = document.getElementById('rating-min-slider');
         const ratingMaxSlider = document.getElementById('rating-max-slider');
         filterTagsInput = document.getElementById('filter-tags-input');
@@ -2223,7 +2319,6 @@
             filterPlaces();
         });
         
-        // Place creation form noise slider
         document.getElementById('place-noise-level').addEventListener('input', function(e) {
             updateNoiseLabel(e.target.value, 'place-noise-value');
         });
@@ -2348,10 +2443,9 @@
             const address = document.getElementById('search-input').value;
             geocodeAddress(address);
         });
-        document.getElementById('save-place-btn').addEventListener('click', openModal);
+        document.getElementById('add-place-btn').addEventListener('click', openModal);
         document.getElementById('place-form').addEventListener('submit', savePlace);
 
-        // Close modal on outside click
         window.onclick = function(event) {
             const modal = document.getElementById('place-modal');
             if (event.target === modal) {
@@ -2359,15 +2453,98 @@
             }
         }
 
-        // Initialize
+        document.getElementById('filters-toggle').addEventListener('click', function(e) {
+            e.stopPropagation();
+            togglePanel('filters');
+        });
+
+        document.getElementById('places-toggle').addEventListener('click', function(e) {
+            e.stopPropagation();
+            togglePanel('places');
+        });
+
         document.addEventListener('DOMContentLoaded', function() {
             initMap();
             updateNoiseLabel(9, 'noise-value');
             updateNoiseLabel(0, 'place-noise-value');
             updateRatingRangeUI();
             renderFilterSelectedTags();
+            initHoverPanels();
         });
+
+                function forceTransparentHeader() {
+            const header = document.querySelector('.header');
+            if (header) {
+                header.style.background = 'rgba(255, 255, 255, 0.90)';
+                header.style.backdropFilter = 'blur(20px)';
+                header.style.webkitBackdropFilter = 'blur(20px)';
+                header.style.borderBottom = '1px solid rgba(0, 0, 0, 0.1)';
+            }
+            
+            const searchInput = document.querySelector('.search-input');
+            if (searchInput) {
+                searchInput.style.background = 'rgba(255, 255, 255, 0.85)';
+                searchInput.style.border = '1px solid rgba(224, 224, 224, 0.8)';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            forceTransparentHeader();
+            setTimeout(forceTransparentHeader, 100);
+            setTimeout(forceTransparentHeader, 500);
+        });
+
+        window.addEventListener('resize', forceTransparentHeader);
+
+        // Проверка стилей header
+            function checkHeaderStyles() {
+                const header = document.querySelector('.header');
+                console.log('Header element:', header);
+                console.log('Header computed styles:', {
+                    background: getComputedStyle(header).background,
+                    backgroundColor: getComputedStyle(header).backgroundColor,
+                    backdropFilter: getComputedStyle(header).backdropFilter,
+                    opacity: getComputedStyle(header).opacity
+                });
+            }
+
+            // Принудительное применение стилей
+            function applyHeaderStyles() {
+                const header = document.querySelector('.header');
+                if (header) {
+                    header.style.cssText = `
+                        position: fixed !important;
+                        top: 0 !important;
+                        left: 0 !important;
+                        right: 0 !important;
+                        background: rgba(255, 255, 255, 0.90) !important;
+                        backdrop-filter: blur(20px) !important;
+                        -webkit-backdrop-filter: blur(20px) !important;
+                        padding: 12px 20px !important;
+                        display: flex !important;
+                        justify-content: space-between !important;
+                        align-items: center !important;
+                        z-index: 2000 !important;
+                        height: 60px !important;
+                        border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+                    `;
+                }
+                
+                const searchInput = document.querySelector('.search-input');
+                if (searchInput) {
+                    searchInput.style.cssText = `
+                        background: rgba(255, 255, 255, 0.85) !important;
+                        border: 1px solid rgba(224, 224, 224, 0.8) !important;
+                        backdrop-filter: blur(10px) !important;
+                    `;
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                checkHeaderStyles();
+                applyHeaderStyles();
+                setTimeout(applyHeaderStyles, 100);
+            });
     </script>
 </body>
 </html>
-
