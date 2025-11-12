@@ -675,6 +675,39 @@
             color: #666;
         }
 
+        .filter-selected-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .filter-tag-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            background: #e9f2ff;
+            border-radius: 16px;
+            font-size: 12px;
+            color: #3669b3;
+            border: 1px solid #c8dcff;
+        }
+
+        .filter-tag-remove {
+            background: none;
+            border: none;
+            color: #3669b3;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .filter-tag-remove:hover {
+            color: #1f4d91;
+        }
+
         .tag-more-indicator {
             cursor: pointer;
             background: #e3f2fd;
@@ -952,7 +985,19 @@
                         </div>
                     </li>
                </ul>
-               <button type="button" class="area-filter-btn" id="area-filter-btn">Выбрать область</button>
+            </div>
+
+            <div class="filter-group">
+                <button type="button" class="area-filter-btn" id="area-filter-btn">Выбрать область</button>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Теги</label>
+                <div class="tags-autocomplete-wrapper">
+                    <input type="text" class="form-input" id="filter-tags-input" placeholder="Начните вводить тег..." autocomplete="off">
+                    <div class="autocomplete-dropdown" id="filter-tags-autocomplete"></div>
+                </div>
+                <div class="filter-selected-tags" id="filter-tags-selected"></div>
             </div>
 
             <button class="reset-filters-btn" id="reset-filters">Сбросить фильтры</button>
@@ -1053,6 +1098,12 @@
         let areaRectangle = null;
         let areaBounds = null;
         let areaFilterBtn = null;
+        let filterSelectedTags = [];
+        let filterTagsInput = null;
+        let filterTagsDropdown = null;
+        let filterTagsContainer = null;
+        let filterSelectedAutocompleteIndex = -1;
+        let filterAutocompleteTimeout = null;
 
         // Initialize Yandex Map
         function initMap() {
@@ -1693,6 +1744,7 @@
             const brightFilter = document.getElementById('bright-filter').checked;
             const openNowFilter = document.getElementById('open-now-filter').checked;
             const { min: ratingMin, max: ratingMax } = getRatingRange();
+            const hasTagFilter = filterSelectedTags.length > 0;
             const searchQuery = document.getElementById('search-input').value.toLowerCase();
 
             filteredPlaces = places.filter(place => {
@@ -1705,6 +1757,11 @@
                 if (brightFilter && !place.amenities.includes('bright')) return false;
                 if (!isPlaceWithinArea(place)) return false;
                 if (openNowFilter && !isPlaceOpenNow(place)) return false;
+                if (hasTagFilter) {
+                    const placeTags = Array.isArray(place.tags) ? place.tags : [];
+                    const matchesAllTags = filterSelectedTags.every(tag => placeTags.includes(tag));
+                    if (!matchesAllTags) return false;
+                }
                 if (searchQuery && !place.name.toLowerCase().includes(searchQuery) && 
                     !(place.address && place.address.toLowerCase().includes(searchQuery))) return false;
                 return true;
@@ -2004,14 +2061,109 @@
 
         // Close autocomplete when clicking outside
         document.addEventListener('click', function(e) {
-            if (!tagsInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
-                autocompleteDropdown.classList.remove('show');
+            if (tagsInput && autocompleteDropdown) {
+                if (!tagsInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
+                    autocompleteDropdown.classList.remove('show');
+                }
+            }
+
+            if (filterTagsInput && filterTagsDropdown) {
+                if (!filterTagsInput.contains(e.target) && !filterTagsDropdown.contains(e.target)) {
+                    filterTagsDropdown.classList.remove('show');
+                }
             }
         });
+
+        // Filter tags functions
+        function renderFilterSelectedTags() {
+            if (!filterTagsContainer) return;
+
+            filterTagsContainer.innerHTML = '';
+
+            if (filterSelectedTags.length === 0) {
+                filterTagsContainer.style.display = 'none';
+                return;
+            }
+
+            filterTagsContainer.style.display = 'flex';
+
+            filterSelectedTags.forEach(tag => {
+                const chip = document.createElement('div');
+                chip.className = 'filter-tag-chip';
+                chip.innerHTML = `
+                    <span>${escapeHtml(tag)}</span>
+                    <button class="filter-tag-remove" type="button" aria-label="Удалить тег ${escapeHtml(tag)}">×</button>
+                `;
+                chip.querySelector('.filter-tag-remove').addEventListener('click', () => {
+                    removeFilterTag(tag);
+                });
+                filterTagsContainer.appendChild(chip);
+            });
+        }
+
+        function addFilterTag(tag) {
+            if (!tag) return;
+            const normalizedTag = tag.trim();
+            if (!normalizedTag) return;
+
+            if (!filterSelectedTags.includes(normalizedTag)) {
+                filterSelectedTags.push(normalizedTag);
+                renderFilterSelectedTags();
+                filterPlaces();
+            }
+
+            if (filterTagsInput) {
+                filterTagsInput.value = '';
+                filterTagsInput.focus();
+            }
+
+            if (filterTagsDropdown) {
+                filterTagsDropdown.classList.remove('show');
+            }
+
+            filterSelectedAutocompleteIndex = -1;
+        }
+
+        function removeFilterTag(tag) {
+            filterSelectedTags = filterSelectedTags.filter(t => t !== tag);
+            renderFilterSelectedTags();
+            filterPlaces();
+        }
+
+        function showFilterAutocomplete(suggestions) {
+            if (!filterTagsDropdown) return;
+
+            filterTagsDropdown.innerHTML = '';
+            filterSelectedAutocompleteIndex = -1;
+
+            const availableSuggestions = suggestions
+                .filter(tag => !filterSelectedTags.includes(tag));
+
+            if (availableSuggestions.length === 0) {
+                filterTagsDropdown.classList.remove('show');
+                return;
+            }
+
+            availableSuggestions.forEach(tag => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                item.textContent = tag;
+                item.addEventListener('click', () => addFilterTag(tag));
+                filterTagsDropdown.appendChild(item);
+            });
+
+            filterTagsDropdown.classList.add('show');
+        }
 
         // Event listeners
         const ratingMinSlider = document.getElementById('rating-min-slider');
         const ratingMaxSlider = document.getElementById('rating-max-slider');
+        filterTagsInput = document.getElementById('filter-tags-input');
+        filterTagsDropdown = document.getElementById('filter-tags-autocomplete');
+        filterTagsContainer = document.getElementById('filter-tags-selected');
+        if (filterTagsContainer) {
+            filterTagsContainer.style.display = 'none';
+        }
 
         document.getElementById('noise-slider').addEventListener('input', function(e) {
             updateNoiseLabel(e.target.value, 'noise-value');
@@ -2049,6 +2201,70 @@
             ratingMaxSlider.addEventListener('input', onMaxInput);
         }
         document.getElementById('open-now-filter').addEventListener('change', filterPlaces);
+        if (filterTagsInput) {
+            const handleFilterTagSuggestions = async (query) => {
+                const suggestions = await fetchTagSuggestions(query);
+                showFilterAutocomplete(suggestions);
+            };
+
+            filterTagsInput.addEventListener('input', function() {
+                const query = filterTagsInput.value.trim();
+                clearTimeout(filterAutocompleteTimeout);
+                filterAutocompleteTimeout = setTimeout(() => {
+                    handleFilterTagSuggestions(query);
+                }, 250);
+            });
+
+            filterTagsInput.addEventListener('focus', function() {
+                if (filterTagsInput.value.trim() === '') {
+                    clearTimeout(filterAutocompleteTimeout);
+                    filterAutocompleteTimeout = setTimeout(() => {
+                        handleFilterTagSuggestions('');
+                    }, 0);
+                }
+            });
+
+            filterTagsInput.addEventListener('keydown', function(e) {
+                if (!filterTagsDropdown) return;
+
+                const items = filterTagsDropdown.querySelectorAll('.autocomplete-item');
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (!filterTagsDropdown.classList.contains('show')) {
+                        handleFilterTagSuggestions(filterTagsInput.value.trim());
+                        return;
+                    }
+                    filterSelectedAutocompleteIndex = Math.min(filterSelectedAutocompleteIndex + 1, items.length - 1);
+                    items.forEach((item, idx) => {
+                        item.classList.toggle('selected', idx === filterSelectedAutocompleteIndex);
+                    });
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (!filterTagsDropdown.classList.contains('show')) return;
+                    filterSelectedAutocompleteIndex = Math.max(filterSelectedAutocompleteIndex - 1, -1);
+                    items.forEach((item, idx) => {
+                        item.classList.toggle('selected', idx === filterSelectedAutocompleteIndex);
+                    });
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (filterTagsDropdown.classList.contains('show') && filterSelectedAutocompleteIndex >= 0) {
+                        const selectedItem = items[filterSelectedAutocompleteIndex];
+                        if (selectedItem) {
+                            addFilterTag(selectedItem.textContent);
+                        }
+                    } else {
+                        addFilterTag(filterTagsInput.value);
+                    }
+                } else if (e.key === 'Escape') {
+                    filterTagsDropdown.classList.remove('show');
+                } else if (e.key === 'Backspace' && filterTagsInput.value === '' && filterSelectedTags.length > 0) {
+                    filterSelectedTags.pop();
+                    renderFilterSelectedTags();
+                    filterPlaces();
+                }
+            });
+        }
         document.getElementById('reset-filters').addEventListener('click', function() {
             document.getElementById('noise-slider').value = 9;
             document.getElementById('wifi-filter').checked = false;
@@ -2056,6 +2272,10 @@
             document.getElementById('bright-filter').checked = false;
             document.getElementById('search-input').value = '';
             document.getElementById('open-now-filter').checked = false;
+            filterSelectedTags = [];
+            renderFilterSelectedTags();
+            if (filterTagsInput) filterTagsInput.value = '';
+            if (filterTagsDropdown) filterTagsDropdown.classList.remove('show');
             if (ratingMinSlider) ratingMinSlider.value = 0;
             if (ratingMaxSlider) ratingMaxSlider.value = 5;
             updateRatingRangeUI();
@@ -2090,6 +2310,7 @@
             updateNoiseLabel(9, 'noise-value');
             updateNoiseLabel(0, 'place-noise-value');
             updateRatingRangeUI();
+            renderFilterSelectedTags();
         });
     </script>
 </body>
