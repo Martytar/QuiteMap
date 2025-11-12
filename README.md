@@ -30,11 +30,6 @@ QuiteMap/
 │   └── posts_list.html # Posts listing page
 ├── static/             # Static files (CSS, JS, images)
 │   └── style.css       # Main stylesheet
-├── alembic/            # Database migrations
-│   ├── versions/       # Migration scripts
-│   ├── env.py          # Alembic environment configuration
-│   └── script.py.mako  # Migration template
-├── alembic.ini         # Alembic configuration
 ├── app.db              # SQLite database (created on first run)
 ├── requirements.txt    # Python dependencies
 ├── shell.nix          # Nix development environment
@@ -54,7 +49,7 @@ nix-shell
 Then run the application:
 
 ```bash
-uvicorn main:app --reload
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ### Using pip
@@ -68,7 +63,7 @@ pip install -r requirements.txt
 Run the application:
 
 ```bash
-uvicorn main:app --reload
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 The `--reload` flag enables auto-reload on code changes, perfect for development.
@@ -109,7 +104,7 @@ cp .env.local.example .env.local
 
 Open your browser and navigate to:
 
-- **Home**: http://localhost:8000/
+- **Home**: http://localhost:8000/ (or http://your-server-ip:8000/ if accessing remotely)
 - **About**: http://localhost:8000/about
 - **Contact**: http://localhost:8000/contact
 - **Users List**: http://localhost:8000/api/users
@@ -198,7 +193,7 @@ Reference them in templates:
 
 ## Development Tips
 
-- Use `uvicorn main:app --reload` for auto-reload during development
+- Use `uvicorn main:app --host 0.0.0.0 --port 8000 --reload` for auto-reload during development
 - Templates are automatically reloaded when changed
 - Check the FastAPI docs at http://localhost:8000/docs for API documentation
 - Use the interactive API explorer at http://localhost:8000/redoc
@@ -242,67 +237,6 @@ async def create_user(db: Session = Depends(get_db)):
     return new_user
 ```
 
-### Database Migrations with Alembic
-
-This project includes Alembic for database migrations.
-
-#### Initial Setup
-
-After installing dependencies, initialize Alembic (already done, but for reference):
-
-```bash
-alembic init alembic
-```
-
-#### Creating Migrations
-
-When you modify models in `models.py`, create a new migration:
-
-```bash
-# Auto-generate migration from model changes
-alembic revision --autogenerate -m "Description of changes"
-
-# Or create an empty migration for manual edits
-alembic revision -m "Description of changes"
-```
-
-#### Applying Migrations
-
-Apply all pending migrations:
-
-```bash
-alembic upgrade head
-```
-
-#### Rolling Back Migrations
-
-Roll back one migration:
-
-```bash
-alembic downgrade -1
-```
-
-Roll back to a specific revision:
-
-```bash
-alembic downgrade <revision_id>
-```
-
-#### View Migration History
-
-```bash
-alembic history
-```
-
-#### Example Workflow
-
-1. Modify `models.py` (add a field, create a new model, etc.)
-2. Generate migration: `alembic revision --autogenerate -m "Add user avatar field"`
-3. Review the generated migration in `alembic/versions/`
-4. Apply migration: `alembic upgrade head`
-
-**Note**: The database is automatically created on first run using `init_db()`. For production, use migrations instead.
-
 ## Environment Variables
 
 Access environment variables in your code using the `settings` object:
@@ -326,7 +260,6 @@ The `config.py` module automatically loads variables from `.env` and `.env.local
 - **uvicorn**: ASGI server for running FastAPI applications
 - **Jinja2**: Template engine for server-side rendering
 - **SQLAlchemy**: SQL toolkit and ORM for Python
-- **Alembic**: Database migration tool for SQLAlchemy
 - **python-dotenv**: Environment variable management from .env files
 
 ## License

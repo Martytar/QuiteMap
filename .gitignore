@@ -8,11 +8,10 @@
 !models.py
 !config.py
 !requirements.txt
+!justfile
 
 # Documentation
 !README.md
-!MIGRATIONS.md
-!ENV_EXAMPLE.md
 !docs/
 !docs/**
 
@@ -27,16 +26,10 @@
 !static/
 !static/**
 
-# Alembic migrations
-!alembic/
-!alembic/**
-!alembic.ini
-
 # Database file (optional - uncomment if you want to track it)
 # !app.db
 
 # Environment files
-!.env
-!.env.local.example
-# .env.local is intentionally ignored (local overrides)
+!.env.example
+# .env and .env.local is intentionally ignored (local overrides)
 
