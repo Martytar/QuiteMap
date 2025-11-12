@@ -301,10 +301,7 @@
     </div>
   </div>
 
-  <body>
-
-
-    <script>
+  <script>
       // Get bot username from template
       const tgBotUsername = '{{ tg_bot_username }}';
       
@@ -344,15 +341,6 @@
         alertMessageEl.classList.add('hidden');
       }
 
-      function checkAuth() {
-        const token = localStorage.getItem('token');
-        const username = localStorage.getItem('username');
-
-        if (token && username) {
-          showUserSection(username);
-        }
-      }
-
       document.getElementById('loginForm').addEventListener('submit', async function (e) {
         e.preventDefault();
 
@@ -371,11 +359,7 @@
             const data = await response.json();
 
             if (response.ok) {
-              localStorage.setItem('token', data.access_token);
-              localStorage.setItem('username', data.username);
-              localStorage.setItem('user_id', data.user_id);
               showAlert('Успешный вход! Перенаправление...', 'success');
-
               window.location.href = '/map';
             } else {
               showAlert(data.detail || 'Ошибка входа');
@@ -460,15 +444,11 @@
       }
 
       function logout() {
-        localStorage.removeItem('token');
-        localStorage.removeItem('username');
-        localStorage.removeItem('user_id');
         showLogin();
         showAlert('Вы вышли из системы', 'success');
       }
 
       document.addEventListener('DOMContentLoaded', function () {
-        checkAuth();
         showLogin();
       });
     </script>

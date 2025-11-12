@@ -53,20 +53,6 @@ class Settings:
     SECRET_KEY: str = os.getenv("SECRET_KEY", "change-this-secret-key-in-production")
     JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
-    
-    @classmethod
-    def validate(cls):
-        """
-        Validate that required settings are present.
-        Raises ValueError if required settings are missing.
-        """
-        if not cls.YANDEX_MAPS_API_KEY:
-            # Warning only, not required for basic functionality
-            import warnings
-            warnings.warn(
-                "YANDEX_MAPS_API_KEY is not set. Some features may not work.",
-                UserWarning
-            )
 
 
 # Create a settings instance

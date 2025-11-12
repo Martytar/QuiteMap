@@ -43,10 +43,3 @@ def get_db():
         db.close()
 
 
-def init_db():
-    """
-    Initialize database by creating all tables.
-    Call this once when starting the application.
-    """
-    Base.metadata.create_all(bind=engine)
-

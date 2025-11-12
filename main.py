@@ -5,7 +5,6 @@ import httpx
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean
 from sqlalchemy.sql import func
 from database import Base, engine, get_db
 from sqlalchemy.orm import Session
@@ -97,10 +96,9 @@ def get_user_from_token(request: Request, db: Session):
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
         username: str = payload.get("sub")
         if username:
-            user = db.query(User).filter(User.username == username).first()
-            return user
+            return db.query(User).filter(User.username == username).first()
     except JWTError:
-        return None
+        pass
     return None
 
 # Routes

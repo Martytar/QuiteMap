@@ -2502,37 +2502,6 @@
             renderFilterSelectedTags();
             initHoverPanels();
         });
-
-                function forceTransparentHeader() {
-            const header = document.querySelector('.header');
-            if (header) {
-                header.style.background = 'rgba(255, 255, 255, 0.90)';
-                header.style.backdropFilter = 'blur(20px)';
-                header.style.webkitBackdropFilter = 'blur(20px)';
-                header.style.borderBottom = '1px solid rgba(0, 0, 0, 0.1)';
-            }
-            
-            const searchInput = document.querySelector('.search-input');
-            if (searchInput) {
-                searchInput.style.background = 'rgba(255, 255, 255, 0.85)';
-                searchInput.style.border = '1px solid rgba(224, 224, 224, 0.8)';
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            forceTransparentHeader();
-            setTimeout(forceTransparentHeader, 100);
-            setTimeout(forceTransparentHeader, 500);
-        });
-
-        window.addEventListener('resize', forceTransparentHeader);
-
-
-            document.addEventListener('DOMContentLoaded', function() {
-                checkHeaderStyles();
-                applyHeaderStyles();
-                setTimeout(applyHeaderStyles, 100);
-            });
     </script>
 </body>
 </html>

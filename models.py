@@ -24,7 +24,7 @@ class User(Base):
     full_name = Column(String(100), nullable=True)
     telegram_handle = Column(String(100), nullable=True, index=True)
     activation_token = Column(String(255), nullable=True, index=True)
-    is_active = Column(Boolean, default=False)  # Changed default to False for email activation
+    is_active = Column(Boolean, default=False)
     is_superuser = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
