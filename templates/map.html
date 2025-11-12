@@ -465,6 +465,7 @@
             display: flex;
             flex-direction: column;
             min-height: 200px;
+            cursor: pointer;
         }
 
         .place-card:hover {
@@ -1373,7 +1374,44 @@
                 </div>
             `;
 
+            // Add click handler to focus map on place marker
+            card.addEventListener('click', function(e) {
+                // Don't trigger if clicking on buttons or interactive elements
+                if (e.target.closest('button') || 
+                    e.target.closest('.star-btn') || 
+                    e.target.closest('.tag-more-indicator') ||
+                    e.target.closest('.tag-expand-btn') ||
+                    e.target.closest('.edit-btn') ||
+                    e.target.closest('.delete-btn')) {
+                    return;
+                }
+                focusMapOnPlace(place);
+            });
+
             return card;
+        }
+
+        // Focus map on a specific place
+        function focusMapOnPlace(place) {
+            if (!map || !place) return;
+            
+            const coords = [place.latitude, place.longitude];
+            
+            // Center map on place coordinates with zoom level 15
+            map.setCenter(coords, 15, {
+                duration: 300
+            });
+            
+            // Open balloon for the corresponding placemark if it exists
+            const placemark = permanentPlacemarks.find(pm => {
+                const pmCoords = pm.geometry.getCoordinates();
+                return Math.abs(pmCoords[0] - coords[0]) < 0.0001 && 
+                       Math.abs(pmCoords[1] - coords[1]) < 0.0001;
+            });
+            
+            if (placemark) {
+                placemark.balloon.open();
+            }
         }
 
         // Helper functions
