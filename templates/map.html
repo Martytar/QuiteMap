@@ -1294,6 +1294,43 @@
                 });
                 map.events.add('click', handleMapClick);
 
+                // Изменяем ссылку "условия использования" в виджете Яндекс Карт
+                function updateTermsLink() {
+                    const mapContainer = document.getElementById('yandex-map');
+                    if (mapContainer) {
+                        // Ищем все ссылки в контейнере карты
+                        const links = mapContainer.querySelectorAll('a');
+                        links.forEach(function(link) {
+                            const href = link.href || '';
+                            const text = link.textContent || '';
+                            // Проверяем различные варианты ссылок на условия использования
+                            if (href.includes('legal') || href.includes('termsofuse') || 
+                                text.toLowerCase().includes('условия') || 
+                                text.toLowerCase().includes('использования') ||
+                                href.includes('maps_termsofuse')) {
+                                link.href = 'https://yandex.ru/legal/maps_termsofuse/ru/';
+                                link.target = '_blank';
+                            }
+                        });
+                    }
+                }
+
+                // Вызываем сразу и через задержку
+                setTimeout(updateTermsLink, 500);
+                setTimeout(updateTermsLink, 2000);
+
+                // Отслеживаем изменения в DOM для динамически добавляемых ссылок
+                const mapContainer = document.getElementById('yandex-map');
+                if (mapContainer && window.MutationObserver) {
+                    const observer = new MutationObserver(function(mutations) {
+                        updateTermsLink();
+                    });
+                    observer.observe(mapContainer, {
+                        childList: true,
+                        subtree: true
+                    });
+                }
+
                 loadPlaces();
             });
         }
