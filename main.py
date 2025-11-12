@@ -287,11 +287,47 @@ async def reverse_geocode(latitude: float, longitude: float) -> str:
         print(f"Geocoding error: {e}")
     return ""
 
+def cleanup_old_temporary_places(db: Session):
+    """Delete temporary places (less than 5 ratings) that are older than 48 hours"""
+    try:
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=48)
+        
+        # Get all places with less than 5 ratings
+        places = db.query(Place).all()
+        deleted_count = 0
+        
+        for place in places:
+            # Count ratings for this place
+            ratings_count = db.query(func.count(Rating.id)).filter(
+                Rating.place_id == place.id
+            ).scalar()
+            ratings_count = ratings_count or 0
+            
+            # Check if place is temporary and old enough
+            if ratings_count < 5 and place.created_at:
+                # Check if place is older than 48 hours
+                if place.created_at < cutoff_time:
+                    # Delete the place (cascade will delete ratings and tags)
+                    db.delete(place)
+                    deleted_count += 1
+        
+        if deleted_count > 0:
+            db.commit()
+            print(f"Cleaned up {deleted_count} old temporary places")
+        
+        return deleted_count
+    except Exception as e:
+        db.rollback()
+        print(f"Error cleaning up temporary places: {e}")
+        return 0
+
 # Places API endpoints
 @app.get("/api/places")
 async def get_places(request: Request, db: Session = Depends(get_db)):
     """Get all places (available to all users)"""
     try:
+        # Clean up old temporary places before returning list
+        cleanup_old_temporary_places(db)
         # Try to get current user (optional)
         user = get_user_from_token(request, db)
         
@@ -311,6 +347,15 @@ async def get_places(request: Request, db: Session = Depends(get_db)):
                 Rating.place_id == place.id
             ).scalar()
             avg_rating = float(avg_rating_result) if avg_rating_result else 0.0
+            
+            # Count number of ratings
+            ratings_count = db.query(func.count(Rating.id)).filter(
+                Rating.place_id == place.id
+            ).scalar()
+            ratings_count = ratings_count or 0
+            
+            # Check if place is temporary (less than 5 ratings)
+            is_temporary = ratings_count < 5
             
             # Get user's rating if authenticated
             user_rating = None
@@ -337,10 +382,13 @@ async def get_places(request: Request, db: Session = Depends(get_db)):
                 "amenities": json.loads(place.amenities) if place.amenities else [],
                 "tags": tag_names,
                 "rating": round(avg_rating, 1),
+                "ratings_count": ratings_count,
+                "is_temporary": is_temporary,
                 "user_rating": user_rating,
                 "hours": json.loads(place.hours) if place.hours else [],
                 "address": address or "",
-                "is_owner": is_owner
+                "is_owner": is_owner,
+                "created_at": place.created_at.isoformat() if place.created_at else None
             })
         return {"places": places_data}
     except Exception as e:
