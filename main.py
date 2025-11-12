@@ -294,7 +294,6 @@ async def activate_account(
 
 @app.post("/login")
 async def login(
-    response: JSONResponse,
     username: str = Form(...),
     password: str = Form(...),
     db: Session = Depends(get_db)
@@ -551,19 +550,35 @@ async def get_places(request: Request, db: Session = Depends(get_db)):
             # Check if current user owns this place
             is_owner = user and place.user_id == user.id
             
+            # Parse amenities safely
+            try:
+                amenities_list = json.loads(place.amenities) if place.amenities else []
+                if not isinstance(amenities_list, list):
+                    amenities_list = []
+            except (json.JSONDecodeError, TypeError):
+                amenities_list = []
+            
+            # Parse hours safely
+            try:
+                hours_list = json.loads(place.hours) if place.hours else []
+                if not isinstance(hours_list, list):
+                    hours_list = []
+            except (json.JSONDecodeError, TypeError):
+                hours_list = []
+            
             places_data.append({
                 "id": place.id,
                 "latitude": place.latitude,
                 "longitude": place.longitude,
                 "name": place.name,
                 "noise_level": place.noise_level,
-                "amenities": json.loads(place.amenities) if place.amenities else [],
+                "amenities": amenities_list,
                 "tags": tag_names,
                 "rating": round(avg_rating, 1),
                 "ratings_count": ratings_count,
                 "is_temporary": is_temporary,
                 "user_rating": user_rating,
-                "hours": json.loads(place.hours) if place.hours else [],
+                "hours": hours_list,
                 "address": address or "",
                 "is_owner": is_owner,
                 "created_at": place.created_at.isoformat() if place.created_at else None

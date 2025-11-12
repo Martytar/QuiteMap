@@ -1448,13 +1448,14 @@
             ).join('');
 
             const amenityIcons = [];
-            if (place.amenities.includes('wifi')) {
+            const amenities = Array.isArray(place.amenities) ? place.amenities : [];
+            if (amenities.includes('wifi')) {
                 amenityIcons.push('<img src="/static/wi-fi.png" alt="Wi-Fi" title="Wi-Fi" class="amenity-icon">');
             }
-            if (place.amenities.includes('outlets')) {
+            if (amenities.includes('outlets')) {
                 amenityIcons.push('<img src="/static/plug.png" alt="Розетки" title="Розетки" class="amenity-icon">');
             }
-            if (place.amenities.includes('bright')) {
+            if (amenities.includes('bright')) {
                 amenityIcons.push('<img src="/static/brightness.png" alt="Светлое место" title="Светлое место" class="amenity-icon">');
             }
 
@@ -1541,6 +1542,24 @@
             });
 
             return card;
+        }
+
+        function focusMapOnPlace(place) {
+            if (!map || !place) return;
+            
+            const coords = [place.latitude, place.longitude];
+            map.setCenter(coords, 15, {
+                duration: 300
+            });
+            
+            // Find and open balloon for this place
+            permanentPlacemarks.forEach(placemark => {
+                const placemarkCoords = placemark.geometry.getCoordinates();
+                if (Math.abs(placemarkCoords[0] - place.latitude) < 0.0001 && 
+                    Math.abs(placemarkCoords[1] - place.longitude) < 0.0001) {
+                    placemark.balloon.open();
+                }
+            });
         }
 
         // Helper functions
@@ -1916,7 +1935,8 @@
             const outletsFilter = document.getElementById('outlets-filter').checked;
             const brightFilter = document.getElementById('bright-filter').checked;
             const openNowFilter = document.getElementById('open-now-filter').checked;
-            const myPlacesFilter = document.getElementById('my-places-filter').checked;
+            const myPlacesFilterEl = document.getElementById('my-places-filter');
+            const myPlacesFilter = myPlacesFilterEl ? myPlacesFilterEl.checked : false;
             const { min: ratingMin, max: ratingMax } = getRatingRange();
             const hasTagFilter = filterSelectedTags.length > 0;
             const searchQuery = document.getElementById('search-input').value.toLowerCase();
@@ -1926,9 +1946,10 @@
                 const rawRating = typeof place.rating === 'number' ? place.rating : parseFloat(place.rating);
                 const placeRating = Number.isNaN(rawRating) ? 0 : rawRating;
                 if (placeRating < ratingMin || placeRating > ratingMax) return false;
-                if (wifiFilter && !place.amenities.includes('wifi')) return false;
-                if (outletsFilter && !place.amenities.includes('outlets')) return false;
-                if (brightFilter && !place.amenities.includes('bright')) return false;
+                const placeAmenities = Array.isArray(place.amenities) ? place.amenities : [];
+                if (wifiFilter && !placeAmenities.includes('wifi')) return false;
+                if (outletsFilter && !placeAmenities.includes('outlets')) return false;
+                if (brightFilter && !placeAmenities.includes('bright')) return false;
                 if (myPlacesFilter && !place.is_owner) return false;
                 if (!isPlaceWithinArea(place)) return false;
                 if (openNowFilter && !isPlaceOpenNow(place)) return false;
@@ -1986,9 +2007,10 @@
             updateNoiseLabel(place.noise_level, 'place-noise-value');
             document.getElementById('place-hours').value = place.hours ? place.hours.join(', ') : '';
             
-            document.getElementById('form-wifi').checked = place.amenities.includes('wifi');
-            document.getElementById('form-outlets').checked = place.amenities.includes('outlets');
-            document.getElementById('form-bright').checked = place.amenities.includes('bright');
+            const placeAmenities = Array.isArray(place.amenities) ? place.amenities : [];
+            document.getElementById('form-wifi').checked = placeAmenities.includes('wifi');
+            document.getElementById('form-outlets').checked = placeAmenities.includes('outlets');
+            document.getElementById('form-bright').checked = placeAmenities.includes('bright');
             
             document.getElementById('place-tags').value = place.tags ? place.tags.join(', ') : '';
 
@@ -2349,7 +2371,10 @@
             ratingMaxSlider.addEventListener('input', onMaxInput);
         }
         document.getElementById('open-now-filter').addEventListener('change', filterPlaces);
-        document.getElementById('my-places-filter').addEventListener('change', filterPlaces);
+        const myPlacesFilterEl = document.getElementById('my-places-filter');
+        if (myPlacesFilterEl) {
+            myPlacesFilterEl.addEventListener('change', filterPlaces);
+        }
         if (filterTagsInput) {
             const handleFilterTagSuggestions = async (query) => {
                 const suggestions = await fetchTagSuggestions(query);
@@ -2421,7 +2446,10 @@
             document.getElementById('bright-filter').checked = false;
             document.getElementById('search-input').value = '';
             document.getElementById('open-now-filter').checked = false;
-            document.getElementById('my-places-filter').checked = false;
+            const myPlacesFilterEl = document.getElementById('my-places-filter');
+            if (myPlacesFilterEl) {
+                myPlacesFilterEl.checked = false;
+            }
             filterSelectedTags = [];
             renderFilterSelectedTags();
             if (filterTagsInput) filterTagsInput.value = '';
