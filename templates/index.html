@@ -435,7 +435,11 @@
             const data = await response.json();
 
             if (response.ok) {
-              showAlert('Регистрация создана! Теперь перейдите в Telegram бот @' + tgBotUsername + ' и отправьте команду /start или /activate для завершения регистрации.', 'success');
+              const botLink = 'https://t.me/' + tgBotUsername;
+              const message = 'Регистрация создана! Теперь перейдите в Telegram бот <a href="' + botLink + '" target="_blank" style="color: #059669; text-decoration: underline; font-weight: 500;">@' + tgBotUsername + '</a> и отправьте команду /start или /activate для завершения регистрации.';
+              alertMessageEl.innerHTML = message;
+              alertMessageEl.className = 'alert alert-success';
+              alertMessageEl.classList.remove('hidden');
               document.getElementById('registerForm').reset();
             } else {
               showAlert(data.detail || 'Ошибка регистрации');
