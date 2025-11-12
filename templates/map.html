@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuiteMap - Поиск тихих мест</title>
@@ -34,6 +35,29 @@
             z-index: 2000 !important;
             height: 60px !important;
             border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+        }
+        .remove-marker-btn {
+            background: linear-gradient(135deg, #ff4444, #cc0000) !important;
+            color: white !important;
+            padding: 8px 16px !important;
+            border: none !important;
+            border-radius: 6px !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+            cursor: pointer !important;
+            transition: all 0.3s !important;
+            display: none !important;
+            box-shadow: 0 2px 8px rgba(255, 68, 68, 0.3) !important;
+        }
+
+        .remove-marker-btn:hover {
+            background: linear-gradient(135deg, #cc0000, #aa0000) !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 4px 12px rgba(255, 68, 68, 0.4) !important;
+        }
+
+        .remove-marker-btn.visible {
+            display: block !important;
         }
 
         .header * {
@@ -220,12 +244,12 @@
 
         .map-container {
             position: fixed !important;
-            top: 60px !important; 
+            top: 60px !important;
             left: 0 !important;
             right: 0 !important;
             bottom: 0 !important;
             background: #e8e8e8 !important;
-            z-index: 1 !important; 
+            z-index: 1 !important;
         }
 
         #yandex-map {
@@ -983,17 +1007,94 @@
         .main-container {
             display: none;
         }
+        #remove-marker-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-size: 14px;
+        }
+
+        #remove-marker-btn:hover {
+            background: #cc0000;
+            transform: translateY(-1px);
+        }
+
+        #remove-marker-btn:active {
+            transform: translateY(0);
+        }
+
+        #notification-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 3000;
+            max-width: 300px;
+        }
+
+        .notification-item {
+            background: #e3f2fd;
+            color: #1565c0;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border-left: 4px solid #2196f3;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            animation: slideIn 0.3s ease;
+        }
+
+        .notification-item.success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            border-left-color: #4caf50;
+        }
+
+        .notification-item.error {
+            background: #ffebee;
+            color: #c62828;
+            border-left-color: #f44336;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
 
         @media (max-width: 768px) {
             .side-panel {
                 width: 100%;
                 max-width: 320px;
             }
-            
+
             .panel-toggle span {
                 display: none;
             }
-            
+
             .panel-toggle {
                 padding: 12px 8px;
             }
@@ -1008,7 +1109,8 @@
                 <button class="search-btn" id="search-btn">Искать</button>
             </div>
             <div class="user-info">
-                <button class="add-place-btn" id="add-place-btn">📍 Установить точку</button>
+                <button class="add-place-btn" id="add-place-btn">Установить метку</button>
+                <button class="remove-marker-btn" id="remove-marker-btn" style="display: none;">Удалить метку</button>
                 <span class="user-name">{{ user.username }}</span>
                 <button onclick="logout()" class="btn btn-secondary">Выйти</button>
             </div>
@@ -1129,6 +1231,8 @@
         </div>
     </div>
 
+    <button id="remove-marker-btn">Удалить метку</button>
+
     <div id="place-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1206,7 +1310,6 @@
         let filterTagsContainer = null;
         let filterSelectedAutocompleteIndex = -1;
         let filterAutocompleteTimeout = null;
-        let isInitialLoad = true; // Флаг первой загрузки
 
         let activePanel = null;
 
@@ -1214,7 +1317,7 @@
             const panel = document.getElementById(`${panelType}-panel`);
             const otherPanelType = panelType === 'filters' ? 'places' : 'filters';
             const otherPanel = document.getElementById(`${otherPanelType}-panel`);
-            
+
             if (panel.classList.contains('open')) {
                 closePanel(panelType);
             } else {
@@ -1223,6 +1326,20 @@
                 }
                 panel.classList.add('open');
                 activePanel = panelType;
+            }
+        }
+        function removeTempMarker() {
+            if (tempPlacemark) {
+                map.geoObjects.remove(tempPlacemark);
+                tempPlacemark = null;
+                tempCoords = null;
+                document.getElementById('add-place-btn').classList.remove('visible');
+                const removeBtn = document.getElementById('remove-marker-btn');
+                if (removeBtn) {
+                    removeBtn.style.display = 'none';
+                }
+
+                alert('Временная метка удалена');
             }
         }
 
@@ -1238,7 +1355,7 @@
             if (activePanel) {
                 const panel = document.getElementById(`${activePanel}-panel`);
                 const toggle = document.getElementById(`${activePanel}-toggle`);
-                
+
                 if (!panel.contains(event.target) && !toggle.contains(event.target)) {
                     closePanel(activePanel);
                 }
@@ -1247,13 +1364,13 @@
 
         function initHoverPanels() {
             const panels = ['filters', 'places'];
-            
+
             panels.forEach(panelType => {
                 const toggle = document.getElementById(`${panelType}-toggle`);
                 const panel = document.getElementById(`${panelType}-panel`);
-                
+
                 let hoverTimeout;
-                
+
                 toggle.addEventListener('mouseenter', function() {
                     if (!panel.classList.contains('open')) {
                         hoverTimeout = setTimeout(() => {
@@ -1261,15 +1378,15 @@
                         }, 300);
                     }
                 });
-                
+
                 toggle.addEventListener('mouseleave', function() {
                     clearTimeout(hoverTimeout);
                 });
-                
+
                 panel.addEventListener('mouseenter', function() {
                     clearTimeout(hoverTimeout);
                 });
-                
+
                 panel.addEventListener('mouseleave', function() {
                     if (panel.classList.contains('open')) {
                         hoverTimeout = setTimeout(() => {
@@ -1292,6 +1409,7 @@
                     zoom: 15,
                     controls: ['zoomControl', 'fullscreenControl']
                 });
+
                 map.events.add('click', handleMapClick);
 
                 // Изменяем ссылку "условия использования" в виджете Яндекс Карт
@@ -1304,8 +1422,8 @@
                             const href = link.href || '';
                             const text = link.textContent || '';
                             // Проверяем различные варианты ссылок на условия использования
-                            if (href.includes('legal') || href.includes('termsofuse') || 
-                                text.toLowerCase().includes('условия') || 
+                            if (href.includes('legal') || href.includes('termsofuse') ||
+                                text.toLowerCase().includes('условия') ||
                                 text.toLowerCase().includes('использования') ||
                                 href.includes('maps_termsofuse')) {
                                 link.href = 'https://yandex.ru/legal/maps_termsofuse/ru/';
@@ -1344,7 +1462,7 @@
             tempPlacemark = new ymaps.Placemark(
                 coords,
                 {
-                    balloonContent: 'Временная метка',
+                    balloonContent: 'Временная метка<br/><em>Правый клик для удаления</em>',
                     iconCaption: 'Временная метка'
                 },
                 {
@@ -1355,6 +1473,16 @@
 
             map.geoObjects.add(tempPlacemark);
             document.getElementById('add-place-btn').classList.add('visible');
+
+            const removeBtn = document.getElementById('remove-marker-btn');
+            if (removeBtn) {
+                removeBtn.style.display = 'block';
+            }
+
+            tempPlacemark.events.add('contextmenu', function(e) {
+                e.preventDefault();
+                removeTempMarker();
+            });
 
             tempPlacemark.events.add('dragend', function() {
                 tempCoords = tempPlacemark.geometry.getCoordinates();
@@ -1375,7 +1503,7 @@
                     `https://geocode-maps.yandex.ru/1.x/?apikey=${apiKey}&geocode=${encodeURIComponent(address)}&format=json&results=1`
                 );
                 const data = await response.json();
-                
+
                 if (data.response?.GeoObjectCollection?.featureMember?.length > 0) {
                     const coords = data.response.GeoObjectCollection.featureMember[0]
                         .GeoObject.Point.pos.split(' ').map(Number).reverse();
@@ -1389,6 +1517,7 @@
                 alert('Ошибка при поиске адреса');
             }
         }
+        document.getElementById('remove-marker-btn').addEventListener('click', removeTempMarker);
 
         async function loadPlaces() {
             try {
@@ -1400,12 +1529,9 @@
                     const data = await response.json();
                     places = data.places || [];
                     filterPlaces();
-                    // После первой загрузки сбрасываем флаг
-                    isInitialLoad = false;
                 }
             } catch (error) {
                 console.error('Error loading places:', error);
-                isInitialLoad = false;
             }
         }
 
@@ -1418,7 +1544,7 @@
             filteredPlaces.forEach(place => {
                 // Use gray icon for temporary places (less than 5 ratings), blue for permanent
                 const iconPreset = place.is_temporary ? 'islands#grayDotIcon' : 'islands#blueDotIcon';
-                
+
                 const placemark = new ymaps.Placemark(
                     [place.latitude, place.longitude],
                     {
@@ -1433,8 +1559,7 @@
                 permanentPlacemarks.push(placemark);
             });
 
-            // Не изменяем границы карты при первой загрузке - оставляем начальные координаты
-            if (!isInitialLoad && filteredPlaces.length > 0) {
+            if (filteredPlaces.length > 0) {
                 const bounds = map.geoObjects.getBounds();
                 if (bounds) {
                     map.setBounds(bounds, {
@@ -1446,7 +1571,7 @@
         }
 
         function createBalloonContent(place) {
-            const temporaryBadge = place.is_temporary 
+            const temporaryBadge = place.is_temporary
                 ? `<p style="margin: 5px 0; color: #666; font-style: italic;"><strong>Временное место</strong> (${place.ratings_count || 0} отзывов, нужно 5)</p>`
                 : '';
             return `
@@ -1483,7 +1608,7 @@
             const card = document.createElement('div');
             card.className = 'place-card';
 
-            const noiseBars = Array(9).fill(0).map((_, i) => 
+            const noiseBars = Array(9).fill(0).map((_, i) =>
                 `<div class="noise-bar ${i >= place.noise_level ? 'empty' : ''}"></div>`
             ).join('');
 
@@ -1501,7 +1626,7 @@
 
             const userRating = place.user_rating || null;
             const hasRated = userRating !== null;
-            const starRatingHtml = hasRated 
+            const starRatingHtml = hasRated
                 ? `<div class="user-rating-container">
                     <div class="user-rating-label">Ваша оценка (изменить)</div>
                     <div class="star-rating" id="star-rating-${place.id}">
@@ -1530,7 +1655,7 @@
                     <img src="/static/delete.svg" alt="Удалить" width="16" height="16" style="width:16px; height:16px;">
                 </button>
             ` : '';
-            
+
             card.innerHTML = `
                 ${actionButtons}
                 <div class="place-card-content">
@@ -1570,8 +1695,8 @@
             // Add click handler to focus map on place marker
             card.addEventListener('click', function(e) {
                 // Don't trigger if clicking on buttons or interactive elements
-                if (e.target.closest('button') || 
-                    e.target.closest('.star-btn') || 
+                if (e.target.closest('button') ||
+                    e.target.closest('.star-btn') ||
                     e.target.closest('.tag-more-indicator') ||
                     e.target.closest('.tag-expand-btn') ||
                     e.target.closest('.edit-btn') ||
@@ -1586,16 +1711,16 @@
 
         function focusMapOnPlace(place) {
             if (!map || !place) return;
-            
+
             const coords = [place.latitude, place.longitude];
             map.setCenter(coords, 15, {
                 duration: 300
             });
-            
+
             // Find and open balloon for this place
             permanentPlacemarks.forEach(placemark => {
                 const placemarkCoords = placemark.geometry.getCoordinates();
-                if (Math.abs(placemarkCoords[0] - place.latitude) < 0.0001 && 
+                if (Math.abs(placemarkCoords[0] - place.latitude) < 0.0001 &&
                     Math.abs(placemarkCoords[1] - place.longitude) < 0.0001) {
                     placemark.balloon.open();
                 }
@@ -1607,7 +1732,7 @@
         function hoverStar(placeId, rating) {
             const starContainer = document.getElementById(`star-rating-${placeId}`);
             if (!starContainer) return;
-            
+
             const stars = starContainer.querySelectorAll('.star-btn');
             stars.forEach((star, index) => {
                 const starValue = index + 1;
@@ -1622,7 +1747,7 @@
         function resetStarHover(placeId, currentRating = null) {
             const starContainer = document.getElementById(`star-rating-${placeId}`);
             if (!starContainer) return;
-            
+
             if (currentRating !== null) {
                 const stars = starContainer.querySelectorAll('.star-btn');
                 stars.forEach((star, index) => {
@@ -1667,17 +1792,17 @@
 
         function toggleTags(placeId) {
             const tagsContainer = document.getElementById(`place-tags-${placeId}`);
-            
+
             if (!tagsContainer) return;
-            
+
             const tagsData = tagsContainer.getAttribute('data-tags');
             if (!tagsData) return;
-            
+
             const allTags = JSON.parse(tagsData);
             const moreIndicator = document.getElementById(`tag-more-${placeId}`);
             const expandBtn = document.getElementById(`tag-expand-${placeId}`);
             const isExpanded = expandBtn && expandBtn.style.display !== 'none';
-            
+
             if (isExpanded) {
                 tagsContainer.innerHTML = `
                     ${allTags.slice(0, 2).map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
@@ -1998,7 +2123,7 @@
                     const matchesAllTags = filterSelectedTags.every(tag => placeTags.includes(tag));
                     if (!matchesAllTags) return false;
                 }
-                if (searchQuery && !place.name.toLowerCase().includes(searchQuery) && 
+                if (searchQuery && !place.name.toLowerCase().includes(searchQuery) &&
                     !(place.address && place.address.toLowerCase().includes(searchQuery))) return false;
                 return true;
             });
@@ -2046,12 +2171,12 @@
             document.getElementById('place-noise-level').value = place.noise_level;
             updateNoiseLabel(place.noise_level, 'place-noise-value');
             document.getElementById('place-hours').value = place.hours ? place.hours.join(', ') : '';
-            
+
             const placeAmenities = Array.isArray(place.amenities) ? place.amenities : [];
             document.getElementById('form-wifi').checked = placeAmenities.includes('wifi');
             document.getElementById('form-outlets').checked = placeAmenities.includes('outlets');
             document.getElementById('form-bright').checked = placeAmenities.includes('bright');
-            
+
             document.getElementById('place-tags').value = place.tags ? place.tags.join(', ') : '';
 
             document.getElementById('place-modal').style.display = 'block';
@@ -2069,19 +2194,19 @@
 
         async function savePlace(event) {
             event.preventDefault();
-            
+
             const placeId = document.getElementById('place-id').value;
             const isEditMode = placeId !== '';
 
             if (!isEditMode && !tempCoords) return;
 
             const formData = new FormData();
-            
+
             if (!isEditMode) {
                 formData.append('latitude', tempCoords[0]);
                 formData.append('longitude', tempCoords[1]);
             }
-            
+
             formData.append('name', document.getElementById('place-name').value);
             formData.append('noise_level', parseInt(document.getElementById('place-noise-level').value));
 
@@ -2102,7 +2227,7 @@
             try {
                 const url = isEditMode ? `/api/places/${placeId}` : '/api/places';
                 const method = isEditMode ? 'PUT' : 'POST';
-                
+
                 const response = await fetch(url, {
                     method: method,
                     credentials: 'include',
@@ -2221,16 +2346,16 @@
             tagsInput.value = tagsBefore + tag + (tagsAfter ? ',' : (tagsAfter.length > 0 ? ',' : '')) + tagsAfter;
             autocompleteDropdown.classList.remove('show');
             tagsInput.focus();
-            
+
             const newCursorPos = (tagsBefore + tag).length;
             tagsInput.setSelectionRange(newCursorPos, newCursorPos);
         }
 
         tagsInput.addEventListener('input', function() {
             const currentTag = getCurrentTagInput();
-            
+
             clearTimeout(autocompleteTimeout);
-            
+
             if (currentTag.length < 1) {
                 autocompleteTimeout = setTimeout(async () => {
                     const suggestions = await fetchTagSuggestions('');
@@ -2380,7 +2505,7 @@
             updateNoiseLabel(e.target.value, 'noise-value');
             filterPlaces();
         });
-        
+
         document.getElementById('place-noise-level').addEventListener('input', function(e) {
             updateNoiseLabel(e.target.value, 'place-noise-value');
         });
@@ -2530,6 +2655,14 @@
             e.stopPropagation();
             togglePanel('places');
         });
+        document.addEventListener('DOMContentLoaded', function() {
+    const mapContainer = document.getElementById('yandex-map');
+        if (mapContainer) {
+            mapContainer.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+            });
+        }
+    });
 
         document.addEventListener('DOMContentLoaded', function() {
             initMap();
@@ -2539,6 +2672,32 @@
             renderFilterSelectedTags();
             initHoverPanels();
         });
+
+                function forceTransparentHeader() {
+            const header = document.querySelector('.header');
+            if (header) {
+                header.style.background = 'rgba(255, 255, 255, 0.90)';
+                header.style.backdropFilter = 'blur(20px)';
+                header.style.webkitBackdropFilter = 'blur(20px)';
+                header.style.borderBottom = '1px solid rgba(0, 0, 0, 0.1)';
+            }
+
+            const searchInput = document.querySelector('.search-input');
+            if (searchInput) {
+                searchInput.style.background = 'rgba(255, 255, 255, 0.85)';
+                searchInput.style.border = '1px solid rgba(224, 224, 224, 0.8)';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            forceTransparentHeader();
+            setTimeout(forceTransparentHeader, 100);
+            setTimeout(forceTransparentHeader, 500);
+            checkHeaderStyles();
+            applyHeaderStyles();
+            setTimeout(applyHeaderStyles, 100);
+        });
+
     </script>
 </body>
 </html>
