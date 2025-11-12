@@ -984,6 +984,12 @@
                             <label for="open-now-filter">Работают сейчас</label>
                         </div>
                     </li>
+                    <li class="amenity-item">
+                        <div class="amenity-checkbox">
+                            <input type="checkbox" id="my-places-filter">
+                            <label for="my-places-filter">Мои места</label>
+                        </div>
+                    </li>
                </ul>
             </div>
 
@@ -1212,6 +1218,9 @@
 
             // Add permanent markers
             filteredPlaces.forEach(place => {
+                // Use gray icon for temporary places (less than 5 ratings), blue for permanent
+                const iconPreset = place.is_temporary ? 'islands#grayDotIcon' : 'islands#blueDotIcon';
+                
                 const placemark = new ymaps.Placemark(
                     [place.latitude, place.longitude],
                     {
@@ -1219,7 +1228,7 @@
                         iconCaption: place.name
                     },
                     {
-                        preset: 'islands#blueDotIcon'
+                        preset: iconPreset
                     }
                 );
                 map.geoObjects.add(placemark);
@@ -1240,9 +1249,13 @@
 
         // Create balloon content for placemark
         function createBalloonContent(place) {
+            const temporaryBadge = place.is_temporary 
+                ? `<p style="margin: 5px 0; color: #666; font-style: italic;"><strong>Временное место</strong> (${place.ratings_count || 0} отзывов, нужно 5)</p>`
+                : '';
             return `
                 <div style="padding: 10px;">
                     <h3 style="margin: 0 0 10px 0;">${place.name}</h3>
+                    ${temporaryBadge}
                     <p style="margin: 5px 0;"><strong>Адрес:</strong> ${place.address || 'Загрузка...'}</p>
                     <p style="margin: 5px 0;"><strong>Рейтинг:</strong> ${place.rating}</p>
                     <p style="margin: 5px 0;"><strong>Уровень шума:</strong> ${getNoiseLabel(place.noise_level)}</p>
@@ -1743,6 +1756,7 @@
             const outletsFilter = document.getElementById('outlets-filter').checked;
             const brightFilter = document.getElementById('bright-filter').checked;
             const openNowFilter = document.getElementById('open-now-filter').checked;
+            const myPlacesFilter = document.getElementById('my-places-filter').checked;
             const { min: ratingMin, max: ratingMax } = getRatingRange();
             const hasTagFilter = filterSelectedTags.length > 0;
             const searchQuery = document.getElementById('search-input').value.toLowerCase();
@@ -1755,6 +1769,7 @@
                 if (wifiFilter && !place.amenities.includes('wifi')) return false;
                 if (outletsFilter && !place.amenities.includes('outlets')) return false;
                 if (brightFilter && !place.amenities.includes('bright')) return false;
+                if (myPlacesFilter && !place.is_owner) return false;
                 if (!isPlaceWithinArea(place)) return false;
                 if (openNowFilter && !isPlaceOpenNow(place)) return false;
                 if (hasTagFilter) {
@@ -2201,6 +2216,7 @@
             ratingMaxSlider.addEventListener('input', onMaxInput);
         }
         document.getElementById('open-now-filter').addEventListener('change', filterPlaces);
+        document.getElementById('my-places-filter').addEventListener('change', filterPlaces);
         if (filterTagsInput) {
             const handleFilterTagSuggestions = async (query) => {
                 const suggestions = await fetchTagSuggestions(query);
@@ -2272,6 +2288,7 @@
             document.getElementById('bright-filter').checked = false;
             document.getElementById('search-input').value = '';
             document.getElementById('open-now-filter').checked = false;
+            document.getElementById('my-places-filter').checked = false;
             filterSelectedTags = [];
             renderFilterSelectedTags();
             if (filterTagsInput) filterTagsInput.value = '';
