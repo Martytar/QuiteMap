@@ -2,6 +2,7 @@
 
 Crownsourced map of quiet places to work and study filtered by noise level, availability of Wi-Fi and more.
 
+Presentation: [link](https://docs.google.com/presentation/d/1CUJr1Kskp0RIIE8Vm7223YR9ZhkgHkWw/edit?slide=id.p1#slide=id.p1)
 ## Getting Started
 
 ### Using Nix (Recommended)
